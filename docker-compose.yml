@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  django:
+    build: .
+    container_name: django_container
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./apiApp:/app
+
+  redis:
+    image: "redis:latest"  # Utilise l'image officielle Redis
+    ports:
+      - "6380:6379"  # Redis écoute sur le port 6379

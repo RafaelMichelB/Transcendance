@@ -1,0 +1,5 @@
+daphne
+channels
+channels-redis
+django
+djangorestframework

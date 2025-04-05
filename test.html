@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test WebSocket</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #messages {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            height: 200px;
+            overflow-y: auto;
+        }
+        #sendMessage {
+            margin-top: 10px;
+            padding: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test WebSocket</h1>
+    <button id="connectBtn">Se connecter au WebSocket</button>
+    <div id="messages"></div>
+    <input type="text" id="sendMessage" placeholder="Entrez un message" />
+    <button id="sendBtn">Envoyer</button>
+
+    <script>
+        let socket;
+
+        document.getElementById('connectBtn').addEventListener('click', () => {
+            // Remplacez par l'URL de votre serveur WebSocket
+            socket = new WebSocket("ws://localhost:8000/ws/game/");
+
+            // Événement de connexion
+            socket.onopen = () => {
+                console.log('Connexion WebSocket ouverte');
+                document.getElementById('messages').innerHTML += "<p>Connecté au serveur WebSocket</p>";
+            };
+
+            // Événement de réception de message
+            socket.onmessage = (event) => {
+                const message = event.data;
+                console.log('Message reçu:', message);
+                document.getElementById('messages').innerHTML += "<p>Reçu : " + message + "</p>";
+            };
+
+            // Événement de fermeture de la connexion
+            socket.onclose = () => {
+                console.log('Connexion WebSocket fermée');
+                document.getElementById('messages').innerHTML += "<p>Déconnecté du serveur WebSocket</p>";
+            };
+
+            // Gérer les erreurs
+            socket.onerror = (error) => {
+                console.error('Erreur WebSocket:', error);
+                document.getElementById('messages').innerHTML += "<p>Erreur WebSocket</p>";
+            };
+        });
+
+        document.getElementById('sendBtn').addEventListener('click', () => {
+            const messageToSend = document.getElementById('sendMessage').value;
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(messageToSend);
+                document.getElementById('messages').innerHTML += "<p>Envoyé : " + messageToSend + "</p>";
+                document.getElementById('sendMessage').value = '';  // Réinitialiser le champ de texte
+            } else {
+                console.error('Le WebSocket n\'est pas connecté');
+            }
+        });
+    </script>
+</body>
+</html>

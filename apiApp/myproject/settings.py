@@ -39,8 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'channels',
     'rest_framework',
-    'api',
-    'ponggame',
+    'api'
 ]
 
 MIDDLEWARE = [

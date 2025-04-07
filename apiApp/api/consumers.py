@@ -2,7 +2,7 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from serverPong.ball import Movement, BallData
 from serverPong.Racket import dictInfoRackets
-from .tournamentChallenge import dictTournament
+from .tournamentChallenge import dictTournament, Tournament
 import asyncio
 import sys
 
@@ -11,6 +11,8 @@ class GameConsumer(AsyncWebsocketConsumer):
 		self.room_group_name = "game_room"
 		self.game_running = False
 		self.task = None
+		dictInfoRackets[self.room_group_name] = {"racket1" : [[0, 300], [0,400]], "racket2" : [[1000, 300], [1000,400]]}
+		print(dictInfoRackets, file=sys.stderr)
 
 		await self.channel_layer.group_add(
 			self.room_group_name,
@@ -33,6 +35,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
 		print(action, file=sys.stderr)
 		if action == "start":
+			# INTEGRATE MAP CHECKER 
 			if not self.game_running:
 				self.game_running = True
 				self.task = asyncio.create_task(self.send_game_updates())
@@ -41,9 +44,29 @@ class GameConsumer(AsyncWebsocketConsumer):
 			if self.task:
 				self.task.cancel()
 		elif action == "move":
-			player1Move:str = data.get("player1")
-			player2Move:str = data.get("player2")
+			player1Move:str = data.get("player1", "None")
+			player2Move:str = data.get("player2", "None")
 			print(f"Player 1 move at {player1Move}, player 2 at {player2Move}", file=sys.stderr)
+			if (player1Move == "up") :
+				# if () # Need to check if it hits a wall
+				dictInfoRackets[self.room_group_name]["racket1"][0][1] += 5
+				dictInfoRackets[self.room_group_name]["racket1"][1][1] += 5
+			elif (player1Move == "down") :
+				# if () # Need to check if it hits a wall
+				dictInfoRackets[self.room_group_name]["racket1"][0][1] -= 5
+				dictInfoRackets[self.room_group_name]["racket1"][1][1] -= 5
+			if (player2Move == "up") :
+				# if () # Need to check if it hits a wall
+				dictInfoRackets[self.room_group_name]["racket2"][0][1] += 5
+				dictInfoRackets[self.room_group_name]["racket2"][1][1] += 5
+			elif (player2Move == "down") :
+				# if () # Need to check if it hits a wall
+				dictInfoRackets[self.room_group_name]["racket2"][0][1] -= 5
+				dictInfoRackets[self.room_group_name]["racket2"][1][1] -= 5
+
+
+				
+
 
 	async def game_update(self, event):
 		game_stats = event.get('game_stats', {})
@@ -62,7 +85,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 	async def send_game_updates(self) -> None:
 		# print("==> Starting simulation setup...", file=sys.stderr)
 		try:
-			self.gameSimulation = Movement(BallData(), plnb=2) # Change informations if game module
+			self.gameSimulation = Movement(BallData(), self.room_group_name, plnb=2) # Change informations if game module
 			# print("==> Movement object created", file=sys.stderr)
 			t2 = asyncio.create_task(self.run_simulation())
 			# print("==> Simulation task launched", file=sys.stderr)

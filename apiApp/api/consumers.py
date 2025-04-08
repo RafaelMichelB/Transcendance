@@ -3,6 +3,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from serverPong.ball import Movement, BallData
 from serverPong.Racket import dictInfoRackets
 from .tournamentChallenge import dictTournament, Tournament
+from serverPong.Map import Map
 import asyncio
 import sys
 
@@ -11,7 +12,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 		self.room_group_name = "game_room"
 		self.game_running = False
 		self.task = None
-		self.map = None
+		self.map = Map() #None
 		dictInfoRackets[self.room_group_name] = {"racket1" : [[0, 300], [0,400]], "racket2" : [[1000, 300], [1000,400]]}
 		print(dictInfoRackets, file=sys.stderr)
 
@@ -36,7 +37,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
 		print(action, file=sys.stderr)
 		if action == "start":
-			map = action.get("map", "default.json")
+			mapString = data.get("map", "default.json")
 			# INTEGRATE MAP CHECKER 
 			if not self.game_running:
 				self.game_running = True

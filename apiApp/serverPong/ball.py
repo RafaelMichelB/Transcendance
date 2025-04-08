@@ -163,7 +163,7 @@ class	Movement() :
 
 
 	async def toDictionnary(self) -> dict :
-		ditctionnaryPlayers = dict((f'player{i}', convertToJsonList(self.racketList[i])) for i in range(len(self.racketList)))
+		ditctionnaryPlayers = dict((f'player{i + 1}', convertToJsonList(self.racketList[i])) for i in range(len(self.racketList)))
 		ditctionnaryPlayers["ball"] = self.ball.getData()
 		ditctionnaryPlayers["team1Score"] = self.scorePlayer1
 		ditctionnaryPlayers["team2Score"] = self.scorePlayer2

@@ -41,15 +41,43 @@ class Map() :
 			else :
 				self.winningTeam2 = [Point(1005, 0), Point(1005, 600)]
 			
+	def borderX(self) :
+		minX = 99999999
+		maxX = -99999999
+		for elements in self.walls :
+			if (elements[0].x < minX) :
+				minX = elements[0].x
+			if (elements[0].x > maxX) :
+				maxX = elements[0].x
+			if (elements[1].x < minX) :
+				minX = elements[1].x
+			if (elements[1].x > maxX) :
+				maxX = elements[1].x
+		return (minX, maxX)
+
+	def borderY(self) :
+		minY = 99999999
+		maxY = -99999999
+		for elements in self.walls :
+			if (elements[0].y < minY) :
+				minY = elements[0].y
+			if (elements[0].y > maxY) :
+				maxY = elements[0].y
+			if (elements[1].y < minY) :
+				minY = elements[1].y
+			if (elements[1].y > maxY) :
+				maxY = elements[1].y
+		return (minY, maxY)
+
+
 
 
 # myMap1 = Map()
 
 # print("--------------------- map1 ---------------------")
-# listm1 = myMap1.walls
-# for elem in listm1:
-# 	print(str(elem), end=" ")
-# print()
+# minX, maxX = myMap1.borderX()
+# minY, maxY = myMap1.borderY()
+# print(f"[{minX}, {maxX}], [{minY}, {maxY}]")
 
 
 # myMap2 = Map("map.json")

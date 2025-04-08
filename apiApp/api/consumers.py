@@ -11,6 +11,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 		self.room_group_name = "game_room"
 		self.game_running = False
 		self.task = None
+		self.map = None
 		dictInfoRackets[self.room_group_name] = {"racket1" : [[0, 300], [0,400]], "racket2" : [[1000, 300], [1000,400]]}
 		print(dictInfoRackets, file=sys.stderr)
 
@@ -35,6 +36,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
 		print(action, file=sys.stderr)
 		if action == "start":
+			map = action.get("map", "default.json")
 			# INTEGRATE MAP CHECKER 
 			if not self.game_running:
 				self.game_running = True
@@ -83,18 +85,12 @@ class GameConsumer(AsyncWebsocketConsumer):
 			print(f"Simulation crashed: {e}", file=sys.stderr)
 
 	async def send_game_updates(self) -> None:
-		# print("==> Starting simulation setup...", file=sys.stderr)
 		try:
-			self.gameSimulation = Movement(BallData(), self.room_group_name, plnb=2) # Change informations if game module
-			# print("==> Movement object created", file=sys.stderr)
+			self.gameSimulation = Movement(BallData(), self.room_group_name, map=self.map, plnb=2) # Change informations if game module
 			t2 = asyncio.create_task(self.run_simulation())
-			# print("==> Simulation task launched", file=sys.stderr)
 
-			# print(f"==> game_running = {self.game_running}", file=sys.stderr)
 			while self.game_running:
-				# print("==> Tick", file=sys.stderr)
 				await asyncio.sleep(0.2)
-				# print("==> After sleep", file=sys.stderr)
 					
 				try:
 					stats = await self.gameSimulation.toDictionnary()
@@ -105,10 +101,9 @@ class GameConsumer(AsyncWebsocketConsumer):
 							"game_stats": stats,
 						}
 					)
-				# print("==> Stats sent", file=sys.stderr)
 				except Exception as e:
 					print(f"!!! Failed to send update: {e}", file=sys.stderr)
 		except asyncio.CancelledError:
-			print("Task send_game_update Cancelled")
+			print("Task send_game_update Cancelled", file=sys.stderr)
 			t2.cancel()
 			await t2

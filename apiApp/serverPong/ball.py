@@ -60,13 +60,13 @@ def	normalizeNormalVector(vector:Vector) :
 def calcDotProduct(vec1:Vector, vec2:Vector) :
 	return vec1.x * vec2.x + vec1.y * vec2.y
 
-def add_random_angle(vx, vy, max_degrees=5):
+def add_random_angle(vx, vy, max_degrees=5, addSpeed=8):
     angle = math.atan2(vy, vx)
 
     max_radians = math.radians(max_degrees)
     angle += random.uniform(-max_radians, max_radians)
 
-    magnitude = math.hypot(vx, vy)
+    magnitude = math.hypot(vx, vy) + addSpeed
 
     new_vx = magnitude * math.cos(angle)
     new_vy = magnitude * math.sin(angle)

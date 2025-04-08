@@ -112,4 +112,3 @@ class GameConsumer(AsyncWebsocketConsumer):
 			print("Task send_game_update Cancelled")
 			t2.cancel()
 			await t2
-

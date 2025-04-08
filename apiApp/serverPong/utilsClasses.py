@@ -300,4 +300,3 @@ class Point() :
 		return ((self.x, self.y))
 	def toList(self) -> list :
 		return ([self.x, self.y])
-

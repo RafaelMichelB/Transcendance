@@ -1,0 +1,6 @@
+daphne
+channels
+channels-redis
+django
+djangorestframework
+numpy

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test WebSocket</title>
+    <title>Test SSE</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -23,53 +23,72 @@
     </style>
 </head>
 <body>
-    <h1>Test WebSocket</h1>
-    <button id="connectBtn">Se connecter au WebSocket</button>
+    <h1>Test Server-Sent Events (SSE)</h1>
+    <button id="connectBtn">Se connecter aux événements du serveur</button>
     <div id="messages"></div>
     <input type="text" id="sendMessage" placeholder="Entrez un message" />
     <button id="sendBtn">Envoyer</button>
 
     <script>
-        let socket;
+        let eventSource;
+        let apikey;
 
         document.getElementById('connectBtn').addEventListener('click', () => {
-            // Remplacez par l'URL de votre serveur WebSocket
-            socket = new WebSocket("ws://localhost:8000/ws/game/");
+            fetch("http://localhost:8001/get-api-key")
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json()
+                })
+                .then(data => {
+                    apikey = data.api_key;  // Utilise la réponse ici
+                    // Créer une connexion SSE avec le serveur
+                    eventSource = new EventSource(`http://localhost:8001/events?apikey=${apikey}`);
 
-            // Événement de connexion
-            socket.onopen = () => {
-                console.log('Connexion WebSocket ouverte');
-                document.getElementById('messages').innerHTML += "<p>Connecté au serveur WebSocket</p>";
-            };
-
-            // Événement de réception de message
-            socket.onmessage = (event) => {
-                const message = event.data;
-                console.log('Message reçu:', message);
-                document.getElementById('messages').innerHTML += "<p>Reçu : " + message + "</p>";
-            };
-
-            // Événement de fermeture de la connexion
-            socket.onclose = () => {
-                console.log('Connexion WebSocket fermée');
-                document.getElementById('messages').innerHTML += "<p>Déconnecté du serveur WebSocket</p>";
-            };
-
-            // Gérer les erreurs
-            socket.onerror = (error) => {
-                console.error('Erreur WebSocket:', error);
-                document.getElementById('messages').innerHTML += "<p>Erreur WebSocket</p>";
-            };
-        });
-
+                    // Gérer les événements reçus du serveur
+                    eventSource.onmessage = (event) => {
+                        const message = event.data;
+                        console.log('Message reçu:', message);
+                        document.getElementById('messages').innerHTML += "<p>Reçu : " + message + "</p>";
+                    };
+                    
+                    // Gérer les erreurs de la connexion SSE
+                    eventSource.onerror = (error) => {
+                        console.error('Erreur SSE:', error);
+                        document.getElementById('messages').innerHTML += "<p>Erreur SSE</p>";
+                    };
+                    
+                    // Afficher une confirmation de connexion
+                    document.getElementById('messages').innerHTML += "<p>Connecté aux événements du serveur</p>";
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la récupération de l\'API key:', error);
+                    document.getElementById('messages').innerHTML += "<p>Erreur de connexion à l'API</p>";
+                });
+            });
+                
         document.getElementById('sendBtn').addEventListener('click', () => {
             const messageToSend = document.getElementById('sendMessage').value;
-            if (socket && socket.readyState === WebSocket.OPEN) {
-                socket.send(messageToSend);
-                document.getElementById('messages').innerHTML += "<p>Envoyé : " + messageToSend + "</p>";
-                document.getElementById('sendMessage').value = '';  // Réinitialiser le champ de texte
-            } else {
-                console.error('Le WebSocket n\'est pas connecté');
+            if (messageToSend.trim() !== '') {
+                // Envoyer un message via une requête HTTP classique
+                fetch("http://localhost:8001/send_message", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ message: messageToSend })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Message envoyé', data);
+                    document.getElementById('messages').innerHTML += "<p>Envoyé : " + messageToSend + "</p>";
+                    document.getElementById('sendMessage').value = '';  // Réinitialiser le champ de texte
+                })
+                .catch(error => {
+                    console.error('Erreur lors de l\'envoi du message', error);
+                    document.getElementById('messages').innerHTML += "<p>Erreur lors de l'envoi du message</p>";
+                });
             }
         });
     </script>

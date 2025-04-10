@@ -5,11 +5,21 @@ from serverPong.Racket import dictInfoRackets
 from .tournamentChallenge import dictTournament, Tournament
 from serverPong.Map import Map
 import asyncio
+from urllib.parse import parse_qs
 import sys
 
 class GameConsumer(AsyncWebsocketConsumer):
 	async def connect(self):
-		self.room_group_name = "game_room"
+		query_string = self.scope['query_string'].decode('utf-8')
+		params = parse_qs(query_string)
+
+		# Extraire le paramètre 'room' de la chaîne de requête
+		self.room_group_name = params.get('room', [None])[0]
+
+		if not self.room_group_name:
+			await self.close()  # Fermer la connexion si aucun room n'est spécifié
+			return
+
 		self.game_running = False
 		self.task = None
 		self.map = Map() #None
@@ -30,6 +40,9 @@ class GameConsumer(AsyncWebsocketConsumer):
 			self.channel_name
 		)
 		print("Disconnected", file=sys.stderr)
+
+	async def tempReceived(self, event) :
+		self.receive(event["text_data"])
 
 	async def receive(self, text_data):
 		data = json.loads(text_data)
@@ -66,10 +79,6 @@ class GameConsumer(AsyncWebsocketConsumer):
 				# if () # Need to check if it hits a wall
 				dictInfoRackets[self.room_group_name]["racket2"][0][1] -= 5
 				dictInfoRackets[self.room_group_name]["racket2"][1][1] -= 5
-
-
-				
-
 
 	async def game_update(self, event):
 		game_stats = event.get('game_stats', {})

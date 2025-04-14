@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.responses import StreamingResponse
 import uuid
+from channels_redis.core import RedisChannelLayer
+from asgiref.sync import async_to_sync
 import websockets
 import asyncio
 import sys
@@ -17,6 +19,10 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],  # Permet toutes les méthodes (GET, POST, etc.)
     allow_headers=["*"],  # Permet tous les headers
+)
+
+channel_layer = RedisChannelLayer(
+    hosts=[("redis", 6379)]  # ou l’URL de ton Redis
 )
 
 uri = "ws://django:8000/ws/game/"
@@ -57,19 +63,21 @@ def get_api_key():
 
     return JSONResponse(content={"api_key": api_key})
 
-@app.post("/send-new-data")
+@app.post("/send-message")
 async def sendNewJSON(request: Request):
     raw_body = await request.body()
     decoded = raw_body.decode("utf-8")
 
-    dictionnaryJson = json.loads()
-    rq = RequestParsed(dictionnaryJson.get("apiKey", None), dictionnaryJson.get("actionDic", {}))
+    dictionnaryJson = json.loads(decoded)
+    print(f"dictio : {dictionnaryJson}")
+    rq = RequestParsed(dictionnaryJson.get("apiKey", None), dictionnaryJson.get("message", {}))
     if (rq.apiKey) :
-        async_to_sync(channel_layer.group_send)(
+        print(f"Heyo : {type(rq.action).__name__} | {rq.action}", file=sys.stderr)
+        await channel_layer.group_send(
             rq.apiKey,
             {
                 "type": "tempReceived",
-                "text_data": json.dumps(rq.action)
+                "text_data": rq.action
             }
         )
     print(f"Reiceived Json : {dictionnaryJson}", file=sys.stderr)

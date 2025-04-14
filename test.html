@@ -72,12 +72,12 @@
             const messageToSend = document.getElementById('sendMessage').value;
             if (messageToSend.trim() !== '') {
                 // Envoyer un message via une requête HTTP classique
-                fetch("http://localhost:8001/send_message", {
+                fetch("http://localhost:8001/send-message", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"
                     },
-                    body: JSON.stringify({ message: messageToSend })
+                    body: JSON.stringify({ apiKey: apikey, message: messageToSend })
                 })
                 .then(response => response.json())
                 .then(data => {

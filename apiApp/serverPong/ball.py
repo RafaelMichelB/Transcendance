@@ -20,61 +20,87 @@ def calcIntersections(A1 : Point, A2 : Point, B1 : Point, B2 : Point):
 		else -> ret1 = Intersections point | ret2 = fraction of 1 sec (deadtime)
 	"""
 
-	x1, y1 = A1.toTuple()
-	x2, y2 = A2.toTuple()
-	x3, y3 = B1.toTuple()
-	x4, y4 = B2.toTuple()
+	x1, y1 = A1.toTuple()																																					# Get positions
+	x2, y2 = A2.toTuple()																																					# Get positions
+	x3, y3 = B1.toTuple()																																					# Get positions
+	x4, y4 = B2.toTuple()																																					# Get positions
 
-	dXSpeed = x2 - x1
-	dYSpeed = y2 - y1
+	dXSpeed = x2 - x1																																						# Calc ball trajectory vector
+	dYSpeed = y2 - y1																																						# Calc ball trajectory vector
 
-	dXWall = x4 - x3
-	dYWall = y4 - y3
+	dXWall = x4 - x3																																						# Calc wall vector
+	dYWall = y4 - y3																																						# Calc wall vector
 
-	originDiffX = x3 - x1
-	originDiffY = y3 - y1
-	determinant = dXSpeed * dYWall - dYSpeed * dXWall
+	originDiffX = x3 - x1																																					# Calc Difference beetween both starts
+	originDiffY = y3 - y1																																					# Calc Difference beetween both starts
+	determinant = dXSpeed * dYWall - dYSpeed * dXWall																														# Determine if there is a collision beetween vectors
 
-	# file = open("output.txt", 'a')
 
-	if abs(determinant) < 1e-3 :
+	if abs(determinant) < 1e-3 :																																			# Accept an computer float representation error
 		return None, None
 	
-	timePercent = (originDiffX * dYWall - originDiffY * dXWall) / determinant
-	wallPercent = (originDiffX * dYSpeed - originDiffY * dXSpeed) / determinant
+	timePercent = (originDiffX * dYWall - originDiffY * dXWall) / determinant																								# Calculate when collision occur
+	wallPercent = (originDiffX * dYSpeed - originDiffY * dXSpeed) / determinant																								# Calculate where collision occur
 
-	# file.write(f"----------------------------------------------------------------\nWall:[[{x3}, {y3}], [{x4}, {y4}]]\nMovement:[[{x1}, {y1}], [{x2}, {y2}]]\ntimePercent={timePercent}\nwallPercent={wallPercent}\n")
-
-	if ( 0 <= timePercent <= 1 and 0 <= wallPercent <= 1 ) :
-		interX = x3 + wallPercent * (x4 - x3)
-		interY = y3 + wallPercent * (y4 - y3)
-		print(f"Yiikes: {Point(interX, interY)}", file=sys.stderr)
+	if ( 0.2 <= timePercent <= 1 and 0 <= wallPercent <= 1 ) :																												# Check if the collision is beetween segments
+		interX = x3 + wallPercent * (x4 - x3)																																# Calculate the intersection point
+		interY = y3 + wallPercent * (y4 - y3)																																# Calculate the intersection point
 		return (Point(interX, interY), timePercent)
 
 	return (None, None)
 
 def	normalizeNormalVector(vector:Vector) :
 	norm = math.sqrt(vector.x**2 + vector.y**2)
+	if(norm == 0) :
+		print("vec : ", vector, file=sys.stderr)
 	return Vector(-(round(vector.y / norm, 2)), round(vector.x / norm, 2))
 
 def calcDotProduct(vec1:Vector, vec2:Vector) :
 	return vec1.x * vec2.x + vec1.y * vec2.y
 
-def add_random_angle(vx, vy, max_degrees=5, addSpeed=8):
+def add_random_angle(vx, vy, max_degrees=5):
     angle = math.atan2(vy, vx)
 
     max_radians = math.radians(max_degrees)
     angle += random.uniform(-max_radians, max_radians)
 
-    magnitude = math.hypot(vx, vy) + addSpeed
+    magnitude = math.hypot(vx, vy)
 
     new_vx = magnitude * math.cos(angle)
     new_vy = magnitude * math.sin(angle)
 
     return Vector(new_vx, new_vy)
 
+def calcBouncePlayer(wallHit, hitPoint : Point) -> Vector :
+	print(f"position : {hitPoint}\nwallHit: {wallHit}", file=sys.stderr)
+	vecAB = Vector(wallHit[0], wallHit[1])
+	vecAM = Vector(wallHit[0], hitPoint)
+
+	ratio = vecAM.norm / vecAB.norm 
+	print(f"ratio : {ratio}", file=sys.stderr)
+	if (ratio < 0.125) : 
+		return Vector(90, -90)
+	elif (ratio < 0.250) :
+		return Vector(90, -60)
+	elif (ratio < 0.375) :
+		return Vector(90, -30)
+	elif (ratio < 0.500) :
+		return Vector(90, -10)
+	elif (ratio < 0.625) :
+		return Vector(90, 10)
+	elif (ratio < 0.750) :
+		return Vector(90, 30)
+	elif (ratio < 0.875) :
+		return Vector(90, 60)
+	else
+		return Vector(90, 90)
+
+
+	
+	return (Vector(90, 0))
+
 class	BallData() :
-	def __init__(self, position:Point=Point(500, 425), speed:Vector=Vector(90, 0)) : # Are 500,300 the center of the game ? 
+	def __init__(self, position:Point=Point(500, 425), speed:Vector=Vector(90, 90)) : # Are 500,300 the center of the game ? 
 		self.pos:Point = position
 		self.spd:Vector = speed
 	
@@ -83,11 +109,18 @@ class	BallData() :
 
 	def getData(self) -> dict :
 		return ({"position" : self.pos.toList(), "speed" : self.spd.toList()})
-	def calculateReflexionVector(self, wallHit:Vector) -> Vector :
-		normalVector = normalizeNormalVector(wallHit)
-		print(f"NormalizedVector : {normalVector}", file=sys.stderr)
-		print(f"Vector Reflected : {Vector(self.spd.x - 2 * calcDotProduct(self.spd, normalVector) * normalVector.x, self.spd.y - 2 * calcDotProduct(self.spd, normalVector) * normalVector.y)}", file=sys.stderr)
-		return add_random_angle(self.spd.x - 2 * calcDotProduct(self.spd, normalVector) * normalVector.x, self.spd.y - 2 * calcDotProduct(self.spd, normalVector) * normalVector.y)
+	def calculateReflexionVector(self, wallHit, racketList : list) -> Vector :
+		wallHitVector = Vector(wallHit[0], wallHit[1])
+		normalVector = normalizeNormalVector(wallHitVector)
+		print("Wall Hit : ", wallHitVector, file=sys.stderr)
+		print(f"racketList : {racketList}", file=sys.stderr)
+		print(" Normal Vector : ", normalVector, file=sys.stderr)
+		if (wallHit in racketList) :
+			vReturn = calcBouncePlayer(wallHit, self.pos)
+		else :
+			vReturn = add_random_angle(self.spd.x - 2 * calcDotProduct(self.spd, normalVector) * normalVector.x, self.spd.y - 2 * calcDotProduct(self.spd, normalVector) * normalVector.y)
+		print("Vector to return -->> : ", vReturn, file=sys.stderr)
+		return vReturn
 		
 
 class	Movement() :
@@ -108,83 +141,82 @@ class	Movement() :
 
 	async def calculateLinearMovement(self, vectorMovement : Vector, time : float) -> Point :
 		return (Point(self.ball.pos.x + vectorMovement.x * time, self.ball.pos.y + vectorMovement.y * time))
+	
+	async def setWinPlayer(self, team : int) -> None :
+		if (team == 1) :
+			self.scorePlayer1 += 1
+		else :
+			self.scorePlayer2 += 1
+		self.ball.pos = Point(500, 350) # Place it on center
+		self.ball.spd = Vector(90, 0) # Default vector
 
 	async def isWallIntersection(self, pointTrajectory: Point, timeLeft : float) -> float:
-		# fileNone = open("outputNone.txt", 'a')
-		valueIntersectionsWinning = calcIntersections(self.map.winningTeam1[0], self.map.winningTeam1[1], self.ball.pos, pointTrajectory)
-		if valueIntersectionsWinning[1] != None :
-			self.scorePlayer1 += 1
-			self.lastWallHit = None
-			self.ball.pos = Point(500, 350) # Place it on center
-			self.ball.spd = Vector(90, 0) #default vector
-			await asyncio.sleep(3)
-			return (0.0)
-		valueIntersectionsWinning = calcIntersections(self.map.winningTeam2[0], self.map.winningTeam2[1], self.ball.pos, pointTrajectory)
-		if valueIntersectionsWinning[1] != None :
-			self.scorePlayer2 += 1
-			self.lastWallHit = None
-			self.ball.pos = Point(500, 350) # Place it on center
-			self.ball.spd = Vector(90, 0) #default vector
-			await asyncio.sleep(3)
-			return (0.0)
-
+		### Setting default values to init detectors ###
 		minTimeWallHit : float = 2.0
 		intersectionPoint = Point(100000, 100000)
 		allWalls = self.map.walls + self.racketList
 		wallHit:list | None = None
+
+		### Loop detecting collision ###
 		for wall in allWalls:
-			if (wall != self.lastWallHit) :
-				valueIntersections = calcIntersections(wall[0], wall[1], self.ball.pos, pointTrajectory)
-				# fileNone.write(f"--> isWallIntersection() valueIntersection={valueIntersections}\n")
-				if valueIntersections[1] != None and valueIntersections[1] < minTimeWallHit:
-					minTimeWallHit = valueIntersections[1] * timeLeft
-					print(f"--> isWallIntersection() GET minTimeWallHit={minTimeWallHit}", file=sys.stderr)
-					intersectionPoint = valueIntersections[0]
-					wallHit = wall
-		# fileNone.close()
-		if (minTimeWallHit != 2.0) :
-			self.ball.pos = intersectionPoint
-			self.lastWallHit = wallHit
-			self.ball.spd = self.ball.calculateReflexionVector(Vector(wallHit[0], wallHit[1]))
-			print(f"--> isWallIntersection() YEP self.ball.spd={self.ball.spd}", file=sys.stderr)
-			return (timeLeft - minTimeWallHit)
+			valueIntersections = calcIntersections(wall[0], wall[1], self.ball.pos, pointTrajectory)																		# Determine if there is a wall on ball's trajecttory (bounce)
+			if valueIntersections[1] != None and valueIntersections[1] < minTimeWallHit:																					# Determine if this colision will be the first to occur
+				minTimeWallHit = valueIntersections[1] * timeLeft																											# Set the time after wall collision
+				intersectionPoint = valueIntersections[0]																													# Set the intersection point
+				wallHit = wall																																				# Set the wall which has been hit
+		
+		### What about a collision occur ? ###
+		if (minTimeWallHit != 2.0) :																																		# 0 <= minTimeWallHit <= 1 if a collision has occured
+			self.ball.pos = intersectionPoint																																# Set the new ballPosition to the intersection with the wall
+			print(f"wallHit type : {type(wallHit).__name__} | wallHit : {wallHit}\nwallHit[0] type : {type(wallHit[0]).__name__} | wallHit[0] : {wallHit[0]}\nballSpeed : {self.ball.spd}", file=sys.stderr)
+			self.ball.spd = self.ball.calculateReflexionVector(wallHit, self.racketList)																# Set the new ball movement vector to the reflection (/!\ /!\ NEED TO ADJUST CALCULS IF WALL IS A PLAYER /!\ /!\)
+			self.ball.pos = await self.calculateLinearMovement(self.ball.spd, 0.001)
+			return (0.0)																																# Return the time to calculate after the reflexion
 		else :
-			self.ball.pos = pointTrajectory
-			return (0.0)
-		
+			valueIntersectionsWinning = calcIntersections(self.map.winningTeam1[0], self.map.winningTeam1[1], self.ball.pos, pointTrajectory)								# Determine if 1st player won a round   
+			if valueIntersectionsWinning[1] != None :																														# If ball trajectory go through winning zone 
+				await self.setWinPlayer(1)																																	# Make 1st player win a point
+				await asyncio.sleep(3)																																		# Sleeping to let players react
+			else :
+				valueIntersectionsWinning = calcIntersections(self.map.winningTeam2[0], self.map.winningTeam2[1], self.ball.pos, pointTrajectory)							# Determine if 2nd player won a round
+				if valueIntersectionsWinning[1] != None :																													# If ball trajectory go through winning zone
+					await self.setWinPlayer(2)																																	# Make 2nd player win a point
+					await asyncio.sleep(3)																																	# Sleeping to let players react
+				else :
+					self.ball.pos = pointTrajectory																															# No collision + No winning round --> Keep same vector and update value
+			return (0.0)																																					# No more time to calc on this iteration
+
 	async def getWallsHit(self) -> None :
-		timeLeft : float = 0.005
+		### Determine all movement ###
+		timeLeft : float = 0.005																																			# Set default time to 5 milliseconds	
 
-		while timeLeft > 0.0:
-			linearMovementPoint:Point = await self.calculateLinearMovement(self.ball.spd, timeLeft)
-			timeLeft = await self.isWallIntersection(linearMovementPoint, timeLeft)
-		
-		print(f"ball : {self.ball.pos} / {self.ball.spd}", file=sys.stderr)
-
+		while timeLeft > 0.0:																																				# While there is time to calculate movement
+			linearMovementPoint:Point = await self.calculateLinearMovement(self.ball.spd, timeLeft)																			# Calculate linear movement (No collision)
+			timeLeft = await self.isWallIntersection(linearMovementPoint, timeLeft)																							# Determine if a collision occur during trajectory
 
 	async def toDictionnary(self) -> dict :
-		ditctionnaryPlayers = dict((f'player{i + 1}', convertToJsonList(self.racketList[i])) for i in range(len(self.racketList)))
-		ditctionnaryPlayers["ball"] = self.ball.getData()
-		ditctionnaryPlayers["team1Score"] = self.scorePlayer1
-		ditctionnaryPlayers["team2Score"] = self.scorePlayer2
+		### Return a dictionnary convertible as json, to send data ###
+		ditctionnaryPlayers = dict((f'player{i + 1}', convertToJsonList(self.racketList[i])) for i in range(len(self.racketList)))											# All players position
+		ditctionnaryPlayers["ball"] = self.ball.getData()																													# Add ball informations (Position / Movement vector)
+		ditctionnaryPlayers["team1Score"] = self.scorePlayer1																												# Add Players score
+		ditctionnaryPlayers["team2Score"] = self.scorePlayer2																												# Add Players score
 		return (ditctionnaryPlayers)
 
 	async def doSimulation(self) :
-		iteration = 0
-		while self.runningGame:
-			self.racketList = []
-			# print(f"dict->>>>>> : {dictInfoRackets}\nroomName : {self.roomName}",file=sys.stderr)
-			myDict = dictInfoRackets[self.roomName]
-			for i in range(1, self.nbPlayers + 1):
+		### Main loop of simulation ###
+		while self.runningGame:																																				# While the game didnt stop 
+			self.racketList = []																																			# Empty the racket list
+			myDict = dictInfoRackets[self.roomName]																															# Get the game informations
+			for i in range(1, self.nbPlayers + 1):																															# For each player of the game
 				try :
-					self.racketList.append([Point(myDict[f"racket{i}"][0][0], myDict[f"racket{i}"][0][1]), Point(myDict[f"racket{i}"][1][0], myDict[f"racket{i}"][1][1])])
+					self.racketList.append([Point(myDict[f"racket{i}"][0][0], myDict[f"racket{i}"][0][1]), Point(myDict[f"racket{i}"][1][0], myDict[f"racket{i}"][1][1])])	# Append the positions of player to the racketList
 				except Exception as e:
 					print(f"!!! Error building racketList: {e}", file=sys.stderr)
-			await self.getWallsHit()
-			iteration += 1
-			await asyncio.sleep(0.005)
+			await self.getWallsHit()																																		# Determine all movement
+			await asyncio.sleep(0.005)																																		# Sleep until next frame
 
 	async def stopSimultation(self) :
+		### Stop simulation ###
 		self.runningGame = False
 
 	

@@ -4,6 +4,7 @@ from serverPong.ball import Movement, BallData, calcIntersections
 from serverPong.Racket import dictInfoRackets
 from .tournamentChallenge import dictTournament, Tournament
 from serverPong.Map import Map
+from serverPong.utilsClasses import Point, Vector
 import asyncio
 from urllib.parse import parse_qs
 import sys
@@ -24,14 +25,14 @@ class GameConsumer(AsyncWebsocketConsumer):
 		self.room_group_name = params.get('room', [None])[0]
 
 		if not self.room_group_name:
-			await self.close()  # Fermer la connexion si aucun room n'est spécifié
+			await self.close()
 			return
 
 		self.game_running = False
 		self.task = None
 		self.map = Map() #None
-		dictInfoRackets[self.room_group_name] = {"racket1" : [[0, 365], [0,395]], "racket2" : [[1000, 365], [1000, 395]]}
-		print(dictInfoRackets, file=sys.stderr)
+		dictInfoRackets[self.room_group_name] = {"racket1" : [[0, 300], [0,395]], "racket2" : [[1000, 300], [1000, 395]]}
+		# print(dictInfoRackets, file=sys.stderr)
 
 		await self.channel_layer.group_add(
 			self.room_group_name,
@@ -39,24 +40,24 @@ class GameConsumer(AsyncWebsocketConsumer):
 		)
 
 		await self.accept()
-		print("Connected", file=sys.stderr)
+		# print("Connected", file=sys.stderr)
 
 	async def disconnect(self, close_code):
 		await self.channel_layer.group_discard(
 			self.room_group_name,
 			self.channel_name
 		)
-		print("Disconnected", file=sys.stderr)
+		# print("Disconnected", file=sys.stderr)
 
 
 	async def receive(self, text_data):
-		print(type(text_data).__name__, file=sys.stderr)
+		# print(type(text_data).__name__, file=sys.stderr)
 		data = json.loads(text_data)
-		print(type(data).__name__, file=sys.stderr)
-		print(f"???---??? : {data}", file=sys.stderr)
+		# print(type(data).__name__, file=sys.stderr)
+		# print(f"???---??? : {data}", file=sys.stderr)
 		action = data.get("action")
 
-		print(action, file=sys.stderr)
+		# print(action, file=sys.stderr)
 		if action == "start":
 			mapString = data.get("map", "default.json")
 			# INTEGRATE MAP CHECKER 
@@ -70,27 +71,27 @@ class GameConsumer(AsyncWebsocketConsumer):
 		elif action == "move":
 			player1Move:str = data.get("player1", "None")
 			player2Move:str = data.get("player2", "None")
-			print(f"Player 1 move at {player1Move}, player 2 at {player2Move}", file=sys.stderr)
-			if (player1Move == "up") :
-				if (calcAllIntersections(self.map.walls, Point(dictInfoRackets[self.room_group_name]["racket1"][0][0], dictInfoRackets[self.room_group_name]["racket1"][0][1] + 5), Point(dictInfoRackets[self.room_group_name]["racket1"][1][0], dictInfoRackets[self.room_group_name]["racket1"][1][1] + 5)) == False) # Need to check if it hits a wall
+			# print(f"Player 1 move at {player1Move}, player 2 at {player2Move}", file=sys.stderr)
+			if (player1Move == "down") :
+				if (calcAllIntersections(self.map.walls, Point(dictInfoRackets[self.room_group_name]["racket1"][0][0], dictInfoRackets[self.room_group_name]["racket1"][0][1] + 5), Point(dictInfoRackets[self.room_group_name]["racket1"][1][0], dictInfoRackets[self.room_group_name]["racket1"][1][1] + 5)) == False) : # Need to check if it hits a wall
 					dictInfoRackets[self.room_group_name]["racket1"][0][1] += 5
 					dictInfoRackets[self.room_group_name]["racket1"][1][1] += 5
-			elif (player1Move == "down") :
-				if (calcAllIntersections(self.map.walls, Point(dictInfoRackets[self.room_group_name]["racket1"][0][0], dictInfoRackets[self.room_group_name]["racket1"][0][1] - 5), Point(dictInfoRackets[self.room_group_name]["racket1"][1][0], dictInfoRackets[self.room_group_name]["racket1"][1][1] - 5)) == False) # Need to check if it hits a wall
+			elif (player1Move == "up") :
+				if (calcAllIntersections(self.map.walls, Point(dictInfoRackets[self.room_group_name]["racket1"][0][0], dictInfoRackets[self.room_group_name]["racket1"][0][1] - 5), Point(dictInfoRackets[self.room_group_name]["racket1"][1][0], dictInfoRackets[self.room_group_name]["racket1"][1][1] - 5)) == False) : # Need to check if it hits a wall
 					dictInfoRackets[self.room_group_name]["racket1"][0][1] -= 5
 					dictInfoRackets[self.room_group_name]["racket1"][1][1] -= 5
-			if (player2Move == "up") :
-				if (calcAllIntersections(self.map.walls, Point(dictInfoRackets[self.room_group_name]["racket2"][0][0], dictInfoRackets[self.room_group_name]["racket2"][0][1] + 5), Point(dictInfoRackets[self.room_group_name]["racket2"][1][0], dictInfoRackets[self.room_group_name]["racket2"][1][1] + 5)) == False) # Need to check if it hits a wall
+			if (player2Move == "down") :
+				if (calcAllIntersections(self.map.walls, Point(dictInfoRackets[self.room_group_name]["racket2"][0][0], dictInfoRackets[self.room_group_name]["racket2"][0][1] + 5), Point(dictInfoRackets[self.room_group_name]["racket2"][1][0], dictInfoRackets[self.room_group_name]["racket2"][1][1] + 5)) == False) : # Need to check if it hits a wall
 					dictInfoRackets[self.room_group_name]["racket2"][0][1] += 5
 					dictInfoRackets[self.room_group_name]["racket2"][1][1] += 5
-			elif (player2Move == "down") :
-				if (calcAllIntersections(self.map.walls, Point(dictInfoRackets[self.room_group_name]["racket2"][0][0], dictInfoRackets[self.room_group_name]["racket2"][0][1] - 5), Point(dictInfoRackets[self.room_group_name]["racket2"][1][0], dictInfoRackets[self.room_group_name]["racket2"][1][1] - 5)) == False) # Need to check if it hits a wall
-				dictInfoRackets[self.room_group_name]["racket2"][0][1] -= 5
-				dictInfoRackets[self.room_group_name]["racket2"][1][1] -= 5
+			elif (player2Move == "up") :
+				if (calcAllIntersections(self.map.walls, Point(dictInfoRackets[self.room_group_name]["racket2"][0][0], dictInfoRackets[self.room_group_name]["racket2"][0][1] - 5), Point(dictInfoRackets[self.room_group_name]["racket2"][1][0], dictInfoRackets[self.room_group_name]["racket2"][1][1] - 5)) == False) : # Need to check if it hits a wall
+					dictInfoRackets[self.room_group_name]["racket2"][0][1] -= 5
+					dictInfoRackets[self.room_group_name]["racket2"][1][1] -= 5
 
 	async def tempReceived(self, event) :
-		print(f"HELLO TEMP HERE {event}", file=sys.stderr)
-		print(f"TempReceived!!! {event['text_data']}", file=sys.stderr)
+		# print(f"HELLO TEMP HERE {event}", file=sys.stderr)
+		# print(f"TempReceived!!! {event['text_data']}", file=sys.stderr)
 		await self.receive(event["text_data"])
 	
 	async def game_update(self, event):
@@ -102,7 +103,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 	
 	async def run_simulation(self):
 		try:
-			print("==> Inside run_simulation()", file=sys.stderr)
+			# print("==> Inside run_simulation()", file=sys.stderr)
 			await self.gameSimulation.doSimulation()
 		except Exception as e:
 			print(f"Simulation crashed: {e}", file=sys.stderr)
@@ -127,6 +128,6 @@ class GameConsumer(AsyncWebsocketConsumer):
 				except Exception as e:
 					print(f"!!! Failed to send update: {e}", file=sys.stderr)
 		except asyncio.CancelledError:
-			print("Task send_game_update Cancelled", file=sys.stderr)
+			# print("Task send_game_update Cancelled", file=sys.stderr)
 			t2.cancel()
 			await t2

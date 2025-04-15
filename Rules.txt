@@ -1,5 +1,5 @@
 {"action" : "start"}
 {"action" : "stop"}
 {"action" : "move", "player1" : "up"}
-{"action" : "move", "player2" : "up"}
+{"action" : "move", "player2" : "down"}
 {"action" : "move", "player1" : "up", "player2" : "down"}

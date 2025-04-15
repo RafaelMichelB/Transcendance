@@ -1,7 +1,6 @@
 import math
 import os
 import time
-import numpy as np
 import json
 class Point() :
 	'''Point classes, permit an easier work on the calc, with overload operator'''
@@ -266,7 +265,7 @@ def printState(mapList, ballCoo, relation=30) :
 
 def mainPrinter(racketDictionnary, map=Map()) :
     ls = getAsciiTerrain(map, racketDictionnary)
-    print(f"\r{printState(ls, racketDictionnary['game_stats']['ball']['position'])}", end="")
+    return printState(ls, racketDictionnary['game_stats']['ball']['position'])
 
 # racketDictionnary = {
 #     "game_stats": {

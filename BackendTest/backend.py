@@ -38,20 +38,23 @@ class   RequestParsed :
 
 
 async def  checkForUpdates(uriKey) :
-    async with websockets.connect(uriKey) as ws:
-        while True:
-            # Attendre la réception d'un message depuis le WebSocket
-            message = await ws.recv()  # Attend le message venant du WebSocket
-            # Formater l'événement SSE (Server-Sent Event)
-            yield f"data: {message}\n\n"
+    try :
+        async with websockets.connect(uriKey) as ws:
+            while True:
+                # Attendre la réception d'un message depuis le WebSocket
+                message = await ws.recv()  # Attend le message venant du WebSocket
+                # Formater l'événement SSE (Server-Sent Event)
+                yield f"data: {message}\n\n"
+    except Exception as e :
+        # print(f"[checkForUpdates] WebSocket error : {e}", file=sys.stderr)
+        yield f"data: WebSocket stop\n\n"
+
+
 
 @app.get("/events")
 async def sse(request: Request, apikey: str = None):
-    print("1", file=sys.stderr)
     rq = RequestParsed(apikey, {})
-    print("5", file=sys.stderr)
     if (rq.apiKey) :
-        print("6", file=sys.stderr)
         return StreamingResponse(checkForUpdates(f"{uri}?room={rq.apiKey}"), media_type="text/event-stream")
 
 
@@ -69,10 +72,11 @@ async def sendNewJSON(request: Request):
     decoded = raw_body.decode("utf-8")
 
     dictionnaryJson = json.loads(decoded)
-    print(f"dictio : {dictionnaryJson}")
+    # print(f"dictio : {dictionnaryJson}")
     rq = RequestParsed(dictionnaryJson.get("apiKey", None), dictionnaryJson.get("message", {}))
+    # print(rq.apiKey, file=sys.stderr)
     if (rq.apiKey) :
-        print(f"Heyo : {type(rq.action).__name__} | {rq.action}", file=sys.stderr)
+        # print(f"Heyo : {type(rq.action).__name__} | {rq.action}", file=sys.stderr)
         await channel_layer.group_send(
             rq.apiKey,
             {
@@ -80,7 +84,7 @@ async def sendNewJSON(request: Request):
                 "text_data": rq.action
             }
         )
-    print(f"Reiceived Json : {dictionnaryJson}", file=sys.stderr)
+    # print(f"Reiceived Json : {dictionnaryJson}", file=sys.stderr)
 
 
 

@@ -25,10 +25,22 @@ services:
     networks:
     - redis_network
 
-  redis:
-    image: "redis:latest"  # Utilise l'image officielle Redis
+  cligame :
+    build :
+      context : .
+      dockerfile : ./CLI-game/Dockerfile
+    container_name : cli_game
     ports:
-      - "6380:6379"  # Redis écoute sur le port 6379
+      - "8002:8000"
+    volumes:
+      - ./CLI-game:/app
+    networks :
+      - redis_network
+
+  redis:
+    image: "redis:latest"
+    ports:
+      - "6380:6379"
     networks:
       - redis_network
 

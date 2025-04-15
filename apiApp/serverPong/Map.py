@@ -10,9 +10,9 @@ class Map() :
 	def __init__(self, filePath : str|None = None) :
 		'''If no argument given or if the custom map has an error, it will generate default map'''
 		if (filePath == None):
-			self.walls : list[list[Point]] = [[Point(0, 0), Point(1000, 0)], [Point(0, 600), Point(1000, 600)], [Point(0, 0), Point(0, 150)], [Point(0, 450), Point(0, 600)], [Point(1000, 0), Point(1000, 150)], [Point(1000, 450), Point(1000, 600)]]
-			self.winningTeam1 = [Point(-5, 0), Point(-5, 600)]
-			self.winningTeam2 = [Point(1005, 0), Point(1005, 600)]
+			self.walls : list[list[Point]] = [[Point(-5, 0), Point(1005, 0)], [Point(-5, 600), Point(1005, 600)], [Point(0, -5), Point(0, 150)], [Point(0, 450), Point(0, 605)], [Point(1000, -5), Point(1000, 150)], [Point(1000, 450), Point(1000, 605)]]
+			self.winningTeam1 = [Point(-5, -50), Point(-5, 650)]
+			self.winningTeam2 = [Point(1005, -50), Point(1005, 650)]
 		else :
 			with open(filePath) as jsonMap :
 				dictParsingMap = json.load(jsonMap)

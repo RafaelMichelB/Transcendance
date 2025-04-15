@@ -13,7 +13,7 @@ class Tournament :
         self.matchList = users
         while (len(self.matchList) > 2) :
             self.matchList = createMatchmaking(self.matchList)
-        print(self.matchList)
+        # print(self.matchList)
     
         
 

@@ -14,7 +14,7 @@ class Vector() :
 			self.y: float = yVector
 		else :
 			self.x: float = yVector.x - xVector.x
-			self.y: float = yVector.y - yVector.x
+			self.y: float = yVector.y - xVector.y
 		if (norm < 0) :
 			self.norm : float = math.sqrt(self.x**2 + self.y**2)
 		else :

@@ -5,6 +5,7 @@ import json
 import curses
 import select
 import time
+import traceback
 from .handleAsciiTerrain import mainPrinter
 
 def getApiKeyCLI() : 
@@ -55,17 +56,21 @@ def main(stdscr):
                 try:
                     line = next(lines).decode("utf-8")
                     if line.startswith("data: "):
-                        content = line[6:]
+                        if (len(line) > 6) :
+                            content = line[6:]
+                        else :
+                            content = "{wwwd}"
                         try:
                             dico = json.loads(content)
                             last_update = mainPrinter(dico)
                             scoresString = f"Player1 : {dico['game_stats']['team1Score']}                 ||                 Player2 : {dico['game_stats']['team2Score']}\n"
-                        except Exception:
+                        except Exception as e:
                             pass
                 except StopIteration:
-                    break
+                    break 
                 except Exception as e:
                     last_update = f"[Erreur SSE] {str(e)}"
+                    
 
             stdscr.clear()
             stdscr.addstr(0, 0, "Appuie sur ↑ ↓ / w s pour bouger, p pour start/stop, q pour quitter.")

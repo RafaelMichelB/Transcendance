@@ -9,8 +9,9 @@ class Map() :
 	''' Permit to create customs map, if we want to do the game customizaion option'''
 	def __init__(self, filePath : str|None = None) :
 		'''If no argument given or if the custom map has an error, it will generate default map'''
+		self.center = Point(500, 300)
 		if (filePath == None):
-			self.walls : list[list[Point]] = [[Point(-5, 0), Point(1005, 0)], [Point(-5, 600), Point(1005, 600)], [Point(0, -5), Point(0, 150)], [Point(0, 450), Point(0, 605)], [Point(1000, -5), Point(1000, 150)], [Point(1000, 450), Point(1000, 605)]]
+			self.walls : list[list[Point]] = [[Point(-5, 0), Point(1005, 0)], [Point(-5, 600), Point(1005, 600)]]
 			self.winningTeam1 = [Point(-5, -50), Point(-5, 650)]
 			self.winningTeam2 = [Point(1005, -50), Point(1005, 650)]
 		else :
@@ -21,7 +22,7 @@ class Map() :
 			isFine : bool = True
 			for wall in listWalls :
 				if len(wall) != 2 or len(wall[0]) != 2 or len(wall[1]) != 2:
-					self.walls : list[list[Point]] = [[Point(0, 0), Point(1000, 0)], [Point(0, 600), Point(1000, 600)], [Point(0, 0), Point(0, 150)], [Point(0, 450), Point(0, 600)], [Point(1000, 0), Point(1000, 150)], [Point(1000, 450), Point(1000, 600)]] # Invalid map throw the default map
+					self.walls : list[list[Point]] = [[Point(-5, 0), Point(1005, 0)], [Point(-5, 600), Point(1005, 600)]]
 					isFine = False
 					break
 				else :
@@ -31,7 +32,7 @@ class Map() :
 			if (isFine) :
 				self.walls = tmpListWalls
 			else : 
-				self.walls = [[Point(0, 0), Point(1000, 0)], [Point(0, 600), Point(1000, 600)], [Point(0, 0), Point(0, 150)], [Point(0, 450), Point(0, 600)], [Point(1000, 0), Point(1000, 150)], [Point(1000, 450), Point(1000, 600)]]
+				self.walls = [[Point(0, 0), Point(1000, 0)], [Point(0, 600), Point(1000, 600)]]
 			if (winningT1 != []) :
 				self.winningTeam1 = [Point(winningT1[0][0], winningT1[0][1]), Point(winningT1[1][0], winningT1[1][1])]
 			else :
@@ -68,22 +69,3 @@ class Map() :
 			if (elements[1].y > maxY) :
 				maxY = elements[1].y
 		return (minY, maxY)
-
-
-
-
-# myMap1 = Map()
-
-# print("--------------------- map1 ---------------------")
-# minX, maxX = myMap1.borderX()
-# minY, maxY = myMap1.borderY()
-# print(f"[{minX}, {maxX}], [{minY}, {maxY}]")
-
-
-# myMap2 = Map("map.json")
-
-# print("--------------------- map2 ---------------------")
-# listm1 = myMap2.walls
-# for elem in listm1:
-# 	print(str(elem), end=" ")
-# print()

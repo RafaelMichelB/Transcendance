@@ -3,7 +3,7 @@ import math
 
 class Vector() :
 	'''Vector classes, permit an easier work on the calc, with overload operator'''
-	def __init__(self, xVector, yVector, norm : float = -1.0) :
+	def __init__(self, xVector, yVector, norm : float = -1.0, spdMultiplier: int = 0) :
 		''' 
 			Init the values for the vector, there is 2 or 3 args :
 				-> From a float x, and a float y it calculate the norm
@@ -19,6 +19,8 @@ class Vector() :
 			self.norm : float = math.sqrt(self.x**2 + self.y**2)
 		else :
 			self.norm = norm
+		
+		self.addedSpeed = spdMultiplier
 
 	def __str__(self) -> str :
 		'''

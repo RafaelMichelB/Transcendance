@@ -8,3 +8,4 @@ channels-redis
 django
 djangorestframework
 numpy
+django-extensions

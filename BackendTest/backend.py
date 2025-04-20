@@ -11,6 +11,8 @@ import sys
 import json
 import time
 
+apiKeysUnplayable = []
+dictApi = {}
 apiKeys = []
 app = FastAPI()
 app.add_middleware(
@@ -57,14 +59,49 @@ async def sse(request: Request, apikey: str = None):
     if (rq.apiKey) :
         return StreamingResponse(checkForUpdates(f"{uri}?room={rq.apiKey}"), media_type="text/event-stream")
 
+@app.post("/set-api-key-alone")
+def setApiKeySp(request: Request, apikey:str=None):
+    print(apikey, file=sys.stderr)
+    apiKeys.append(apikey)
+    return JSONResponse(content={"playable": "Game can start"})
+
+@app.post("/set-api-key")
+def setApiKey(request: Request, apikey:str=None):
+    print(apikey, file=sys.stderr)
+    if apikey not in apiKeysUnplayable:
+        return JSONResponse(content={"playable" : f"Room {apikey} doesn't Exists"})
+    if apikey in dictApi :
+        dictApi[apikey] += 1
+    else :
+        dictApi[apikey] = 1
+
+    if (dictApi[apikey] > 1) :
+        apiKeysUnplayable.remove(apikey)
+        apiKeys.append(apikey)
+        playable = "Game can start"
+    else :
+        playable = "Need more player"
+
+    return JSONResponse(content={"playable": playable})
 
 @app.get("/get-api-key")
 def get_api_key():
     api_key = str(uuid.uuid4())
 
-    apiKeys.append(api_key)
+    apiKeysUnplayable.append(api_key)
 
     return JSONResponse(content={"api_key": api_key})
+
+@app.post("/is-game-playable")
+def isGamePlayable(request: Request, apikey=None) :
+    if (dictApi[apikey] > 1) :
+        apiKeys.append(apikey)
+        playable = "Game can start"
+    else :
+        playable = "Need more player"
+    print(f"playable : {playable}", file=sys.stderr)
+    return JSONResponse(content={"playable": playable})
+
 
 @app.post("/send-message")
 async def sendNewJSON(request: Request):
@@ -85,6 +122,8 @@ async def sendNewJSON(request: Request):
             }
         )
     # print(f"Reiceived Json : {dictionnaryJson}", file=sys.stderr)
+
+    
 
 
 

@@ -1,0 +1,21 @@
+{
+    "Lobby" : {
+        "fileID" : "./Lobby.sc",
+        "inputPos" : [15, 44],
+        "outputPos" : []
+    },
+    "RoomClassicJoin" : {
+        "fileID" : "./RoomClassicJoin.sc",
+        "inputPos" : [14, 27],
+        "outputPos" : [22, 21]
+    },
+    "RoomClassicCreate" : {
+        "fileID" : "./RoomClassicCreate.sc",
+        "inputPos" : [13, 43],
+        "outputPos" : [19, 33]
+    },
+    "SinglePlayer" : {
+        "fileID" : ""
+    }
+
+}

@@ -13,10 +13,28 @@ def getApiKeyCLI() :
     if (res.status_code == 200) :
         return res.json()["api_key"]
 
-val = getApiKeyCLI() # Replacewith generated output with web to link
+def setApiKeyCLI(apikey) :
+    res = requests.post(f"http://rdbackend:8000/set-api-key?apikey={apikey}")
+    if (res.status_code == 200) :
+        return res.json()["playable"]
+    else :
+        return f"Unknown Error : {res.status_code}"
 
+def setApiKeySpCLI(apikey) :
+    res = requests.post(f"http://rdbackend:8000/set-api-key-alone?apikey={apikey}")
+    if (res.status_code == 200) :
+        return res.json()["playable"]
+    else :
+        return f"Unknown Error : {res.status_code}"
 
-def main(stdscr):
+def loadGamePlayable(apikey) :
+    res = requests.post(f"http://rdbackend:8000/is-game-playable?apikey={apikey}")
+    if (res.status_code == 200) :
+        return res.json()["playable"]
+    else :
+        return f"Unknown Error : {res.status_code}"
+
+def handleGame(stdscr, val) :
     curses.curs_set(0)
     stdscr.nodelay(True)
     stdscr.keypad(True)
@@ -78,5 +96,3 @@ def main(stdscr):
             stdscr.refresh()
 
             time.sleep(0.01)
-
-curses.wrapper(main)

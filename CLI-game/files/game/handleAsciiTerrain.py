@@ -231,7 +231,7 @@ def calcYsement(A, B):
     return resultats
 
 
-def getAsciiTerrain(map:Map, rcktDict, relation=20) :
+def getAsciiTerrain(map:Map, rcktDict, relation=30) :
     minX, maxX = map.borderX()
     minY, maxY = map.borderY()
 
@@ -253,7 +253,7 @@ def getAsciiTerrain(map:Map, rcktDict, relation=20) :
     
     return lstFinal
 
-def printState(mapList, ballCoo, relation=20) :
+def printState(mapList, ballCoo, relation=30) :
     ascciBallPos = [round(ballCoo[0] / relation), round(ballCoo[1] / relation)]
     toReturn = ""
     for subList in range(len(mapList)) :

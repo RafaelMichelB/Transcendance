@@ -25,17 +25,17 @@ services:
     networks:
     - redis_network
 
-  cligame :
-    build :
-      context : .
-      dockerfile : ./CLI-game/Dockerfile
-    container_name : cli_game
-    ports:
-      - "8002:8000"
-    volumes:
-      - ./CLI-game:/app
-    networks :
-      - redis_network
+  # cligame :
+  #   build :
+  #     context : .
+  #     dockerfile : ./CLI-game/Dockerfile
+  #   container_name : cli_game
+  #   ports:
+  #     - "8002:8000"
+  #   volumes:
+  #     - ./CLI-game:/app
+  #   networks :
+  #     - redis_network
 
   aimodule:
     build :

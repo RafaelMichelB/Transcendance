@@ -15,7 +15,8 @@
         "outputPos" : [19, 33]
     },
     "SinglePlayer" : {
-        "fileID" : ""
+        "fileID" : "./Singleplayer.sc",
+        "inputPos" : [17, 5],
+        "outputPos" : [17, 56]
     }
-
 }

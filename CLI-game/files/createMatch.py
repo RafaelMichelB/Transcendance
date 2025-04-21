@@ -1,7 +1,7 @@
 from .dataScreens import Screen, loadInfo
 import time
 import curses
-from .game.handleKeyLog import getApiKeyCLI, setApiKeyCLI, loadGamePlayable, handleGame, setApiKeySpCLI
+from .game.handleKeyLog import getApiKeyCLI, setApiKeyCLI, loadGamePlayable, handleGame, setApiKeySpCLI, inputField, handleGame2Players
 
 val = "0000" #getApiKeyCLI() # Replacewith generated output with web to link
 
@@ -20,7 +20,7 @@ def sendGameCreation(stdscr, classScreen, apiKey) :
         stdscr.refresh()
         if (isGamePlayable == "Game can start") :
             time.sleep(0.5)
-            return handleGame(stdscr, apiKey)
+            return handleGame2Players(stdscr, apiKey, 1)
         time.sleep(0.3)
         
 
@@ -44,13 +44,18 @@ def sendGameJoining(stdscr, classScreen) :
         stdscr.refresh()
         if (isGamePlayable == "Game can start") :
             time.sleep(0.5)
-            return handleGame(stdscr, inputGameID)
+            return handleGame2Players(stdscr, inputGameID, 2)
         time.sleep(0.3)
 
 def sendLocalGame(stdscr, classScreen) :
+    infoSinglePlayer = classScreen.getSpecificInfo("SinglePlayer")
+    stdscr.addstr(2, 0, loadInfo(infoSinglePlayer))
+    stdscr.refresh()
+    namePlayer1 = inputField(stdscr, 1 + infoSinglePlayer["inputPos"][0], infoSinglePlayer["inputPos"][1], "NameP1: ", 10)
+    namePlayer2 = inputField(stdscr, 1 + infoSinglePlayer["outputPos"][0], infoSinglePlayer["outputPos"][1], "NameP2: ", 10)
     key = getApiKeyCLI()
     setApiKeySpCLI(key)
-    handleGame(stdscr, key)
+    handleGame(stdscr, key, namePlayer1, namePlayer2)
 
 
 def sendLobby(stdscr, classScreen) :

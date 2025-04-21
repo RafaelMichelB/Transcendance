@@ -44,17 +44,24 @@ async def  checkForUpdates(uriKey) :
         async with websockets.connect(uriKey) as ws:
             while True:
                 # Attendre la réception d'un message depuis le WebSocket
-                message = await ws.recv()  # Attend le message venant du WebSocket
+                message = await asyncio.wait_for(ws.recv(), timeout=1)  # Attend le message venant du WebSocket
+                print(f"message : {message}", file=sys.stderr)
                 # Formater l'événement SSE (Server-Sent Event)
                 yield f"data: {message}\n\n"
+
+        print("[Debug BACKEND checkForUpdate()] - Websocket Closed", file=sys.stderr)
+    except asyncio.TimeoutError :
+        
     except Exception as e :
-        # print(f"[checkForUpdates] WebSocket error : {e}", file=sys.stderr)
+        print(f"[checkForUpdates] WebSocket error : {e}", file=sys.stderr)
         yield f"data: WebSocket stop\n\n"
 
 
 
 @app.get("/events")
-async def sse(request: Request, apikey: str = None):
+async def sse(request: Request, apikey: str = None, idplayer=None):
+    o
+
     rq = RequestParsed(apikey, {})
     if (rq.apiKey) :
         return StreamingResponse(checkForUpdates(f"{uri}?room={rq.apiKey}"), media_type="text/event-stream")
@@ -123,6 +130,7 @@ async def sendNewJSON(request: Request):
         )
     # print(f"Reiceived Json : {dictionnaryJson}", file=sys.stderr)
 
+async def stopGameForfait(
     
 
 

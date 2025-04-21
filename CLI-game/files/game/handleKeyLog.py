@@ -8,27 +8,29 @@ import time
 import traceback
 from .handleAsciiTerrain import mainPrinter
 
+adress = "10.12.4.3"
+
 def getApiKeyCLI() : 
-    res = requests.get("http://10.13.5.7:8001/get-api-key")
+    res = requests.get(f"http://{adress}:8001/get-api-key")
     if (res.status_code == 200) :
         return res.json()["api_key"]
 
 def setApiKeyCLI(apikey) :
-    res = requests.post(f"http://10.13.5.7:8001/set-api-key?apikey={apikey}")
+    res = requests.post(f"http://{adress}:8001/set-api-key?apikey={apikey}")
     if (res.status_code == 200) :
         return res.json()["playable"]
     else :
         return f"Unknown Error : {res.status_code}"
 
 def setApiKeySpCLI(apikey) :
-    res = requests.post(f"http://10.13.5.7:8001/set-api-key-alone?apikey={apikey}")
+    res = requests.post(f"http://{adress}:8001/set-api-key-alone?apikey={apikey}")
     if (res.status_code == 200) :
         return res.json()["playable"]
     else :
         return f"Unknown Error : {res.status_code}"
 
 def loadGamePlayable(apikey) :
-    res = requests.post(f"http://10.13.5.7:8001/is-game-playable?apikey={apikey}")
+    res = requests.post(f"http://{adress}:8001/is-game-playable?apikey={apikey}")
     if (res.status_code == 200) :
         return res.json()["playable"]
     else :
@@ -40,8 +42,8 @@ def handleGame(stdscr, val, nP1, nP2) :
     stdscr.keypad(True)
 
     stdscr.clear()
-    url_sse = f"http://10.13.5.7:8001/events?apikey={val}"
-    url_post = "http://10.13.5.7:8001/send-message"
+    url_sse = f"http://{adress}:8001/events?apikey={val}&idplayer=0"
+    url_post = f"http://{adress}:8001/send-message"
     started = False
 
     with requests.get(url_sse, stream=True) as r:
@@ -103,8 +105,8 @@ def handleGame2Players(stdscr, val, playerID) :
     stdscr.keypad(True)
 
     stdscr.clear()
-    url_sse = f"http://10.13.5.7:8001/events?apikey={val}"
-    url_post = "http://10.13.5.7:8001/send-message"
+    url_sse = f"http://{adress}:8001/events?apikey={val}&idplayer={playerID}"
+    url_post = f"http://{adress}:8001/send-message"
     started = False
 
     with requests.get(url_sse, stream=True) as r:

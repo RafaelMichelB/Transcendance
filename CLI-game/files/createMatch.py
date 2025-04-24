@@ -2,11 +2,11 @@ from .dataScreens import Screen, loadInfo
 import time
 import curses
 from .game.handleKeyLog import getApiKeyCLI, setApiKeyCLI, loadGamePlayable, handleGame, setApiKeySpCLI, inputField, handleGame2Players
+import sys
 
 val = "0000" #getApiKeyCLI() # Replacewith generated output with web to link
 
 dictGameMode = {'1' : "Join regular game", '2' : "Create regular game", '3' : "Join tournament", '4' : "Create tournament", '5' : "Create Local game ", '6' : "Create game versus AI"}
-
 
 def sendGameCreation(stdscr, classScreen, apiKey) :
     infogameCreation = classScreen.getSpecificInfo("RoomClassicCreate")
@@ -84,6 +84,7 @@ def sendLobby(stdscr, classScreen) :
 
 
 def main(stdscr):
+    print("Hello world", file=sys.stderr)
     screens = Screen()
     return sendLobby(stdscr, screens)
 

@@ -9,6 +9,7 @@ from serverPong.utilsClasses import Point, Vector
 import asyncio
 from urllib.parse import parse_qs
 import sys
+import random
 
 def calcAllIntersections(walls, ptRacket1, ptRacket2) :
 	for w in walls:
@@ -19,14 +20,17 @@ def calcAllIntersections(walls, ptRacket1, ptRacket2) :
 			return True
 	return False
 
-		
+
 class GameConsumer(AsyncWebsocketConsumer):
 	async def connect(self):
 		query_string = self.scope['query_string'].decode('utf-8')
 		params = parse_qs(query_string)
+		self.t2 = None
 
 		# Extraire le paramètre 'room' de la chaîne de requête
 		self.room_group_name = params.get('room', [None])[0]
+		self.usrID = int(params.get('userid', [2])[0])
+		print("user ID : ", self.usrID, file=sys.stderr)
 
 		if not self.room_group_name:
 			await self.close()
@@ -113,7 +117,19 @@ class GameConsumer(AsyncWebsocketConsumer):
 		# print(f"HELLO TEMP HERE {event}", file=sys.stderr)
 		# print(f"TempReceived!!! {event['text_data']}", file=sys.stderr)
 		await self.receive(event["text_data"])
-	
+
+	async def disconnectUser(self, event) :
+		if (self.usrID <= 1) :
+			print("yikes", file=sys.stderr)
+			await self.gameSimulation.stopSimulation()
+		print("Disconnecteed from game !",file=sys.stderr)
+		if self.t2 is not None : 
+			self.task.cancel()
+			print("Yes t2 cancel", file=sys.stderr)
+			await self.task
+			cache.delete(f"simulation_state_{self.room_group_name}")
+		await self.close()
+
 	async def game_update(self, event):
 		game_stats = event.get('game_stats', {})
 
@@ -130,25 +146,30 @@ class GameConsumer(AsyncWebsocketConsumer):
 
 	async def send_game_updates(self) -> None:
 		try:
-			self.gameSimulation = Movement(BallData(), self.room_group_name, map=self.map, plnb=2) # Change informations if game module
-			t2 = asyncio.create_task(self.run_simulation())
+			print("usrID send_game_update :", type(self.usrID).__name__, file=sys.stderr)
+			if (self.usrID <= 1) :
+				print("Yes !!!", file=sys.stderr)
+				self.gameSimulation = Movement(BallData(), self.room_group_name, map=self.map, plnb=2, usrID=self.usrID) # Change informations if game module
+				self.t2 = asyncio.create_task(self.run_simulation())
+				# random.seed(42) # TO CHANGE <<--------------<<<<---<<-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------<<<<-
 
-			while self.game_running:
-				await asyncio.sleep(0.2)
-					
-				try:
-					stats = await self.gameSimulation.toDictionnary()
-					cache.set(f'simulation_state_{self.room_group_name}', stats, timeout=None)
-					await self.channel_layer.group_send(
-						self.room_group_name,
-						{
-							"type": "game_update",
-							"game_stats": stats,
-						}
-					)
-				except Exception as e:
-					print(f"!!! Failed to send update: {e}", file=sys.stderr)
+				while self.game_running:
+					await asyncio.sleep(0.2)
+					try:
+						if self.usrID <= 1 :
+							await self.gameSimulation.setRedisCache(self.room_group_name)
+						stats = cache.get(f'simulation_state_{self.room_group_name}')
+						print(f"usrID : {self.usrID}\nstats: {stats}", file=sys.stderr)
+						await self.channel_layer.group_send(
+							self.room_group_name,
+							{
+								"type": "game_update",
+								"game_stats": stats,
+							}
+						)
+					except Exception as e:
+						print(f"!!! Failed to send update: {e}", file=sys.stderr)
 		except asyncio.CancelledError:
 			# print("Task send_game_update Cancelled", file=sys.stderr)
-			t2.cancel()
-			await t2
+			self.t2.cancel()
+			await self.t2

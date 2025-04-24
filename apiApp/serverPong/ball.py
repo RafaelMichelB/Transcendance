@@ -8,6 +8,7 @@ import sys
 from .Racket import dictInfoRackets
 import random
 import asyncio
+from django.core.cache import cache
 
 def convertToJsonList(elem) :
 	return [[elem[0].x, elem[0].y], [elem[1].x, elem[1].y]]
@@ -123,8 +124,8 @@ class	BallData() :
 	def __init__(self, position:Point=Point(500, 425), speed:Vector=determineRandomStart()) : # Are 500,300 the center of the game ? 
 		self.pos:Point = position
 		self.spd:Vector = speed
-	
 	def __str__(self) -> str :
+
 		return (f"Position of ball is : {self.position}\nMovement vector is {self.spd}")
 
 	def getData(self) -> dict :
@@ -144,7 +145,7 @@ class	BallData() :
 		
 
 class	Movement() :
-	def __init__(self, ballInfo: BallData, room:str, map: Map = Map(), timestamp: float = time.time(), plnb: int = 2):
+	def __init__(self, ballInfo: BallData, room:str, map: Map = Map(), timestamp: float = time.time(), plnb: int = 2, usrID=2):
 		try:
 			self.lastWallHit = None
 			self.roomName:str = room
@@ -156,19 +157,21 @@ class	Movement() :
 			self.map: Map = map
 			self.scorePlayer1 = 0
 			self.scorePlayer2 = 0
+			self.usrID = usrID
 		except Exception as e:
 			print(f"Error in __init__: {e}", file=sys.stderr)
 
 	async def calculateLinearMovement(self, vectorMovement : Vector, time : float) -> Point :
 		return (Point(self.ball.pos.x + vectorMovement.x * time, self.ball.pos.y + vectorMovement.y * time))
-	
+
 	async def setWinPlayer(self, team : int) -> None :
 		if (team == 1) :
 			self.scorePlayer1 += 1
 		else :
 			self.scorePlayer2 += 1
 		self.ball.pos = self.map.center 																																	# Place it on center
-		self.ball.spd = determineRandomStart()
+		if (self.usrID == 1) :
+			self.ball.spd = determineRandomStart()
 
 	async def isWallIntersection(self, pointTrajectory: Point, timeLeft : float) -> float:
 		### Setting default values to init detectors ###
@@ -221,9 +224,16 @@ class	Movement() :
 		ditctionnaryPlayers["team2Score"] = self.scorePlayer2																												# Add Players score
 		return (ditctionnaryPlayers)
 
+	async def setRedisCache(self, roomName) :
+		stats = await self.toDictionnary()
+		print(f"Stats redisCache : {stats}",  file=sys.stderr)
+		cache.set(f'simulation_state_{roomName}', stats, timeout=None)
+
+
 	async def doSimulation(self) :
 		### Main loop of simulation ###
 		while self.runningGame:																																				# While the game didnt stop 
+			# print(f"running do : {self.runningGame}", file=sys.stderr)
 			self.racketList = []																																			# Empty the racket list
 			myDict = dictInfoRackets[self.roomName]																															# Get the game informations
 			for i in range(1, self.nbPlayers + 1):																															# For each player of the game
@@ -232,11 +242,12 @@ class	Movement() :
 				except Exception as e:
 					print(f"!!! Error building racketList: {e}", file=sys.stderr)
 			await self.getWallsHit()																																		# Determine all movement
-			await asyncio.sleep(0.005)																																		# Sleep until next frame
+			await asyncio.sleep(0.01)																																		# Sleep until next frame
 
-	async def stopSimultation(self) :
+	async def stopSimulation(self) :
 		### Stop simulation ###
 		self.runningGame = False
+		# print(f"running stop : {self.runningGame} <<--------- ", file=sys.stderr)
 
 	
 

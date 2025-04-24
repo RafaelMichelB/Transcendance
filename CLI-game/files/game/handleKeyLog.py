@@ -1,16 +1,27 @@
 import sys
 import requests
-import threading
 import json
 import curses
 import select
+import threading
 import time
 import traceback
 from .handleAsciiTerrain import mainPrinter
+import pynput
+import asyncio
+from .keyPressed import mainKeyHandler
 
-adress = "10.12.4.3"
+adress = "10.12.5.6"
 
-def getApiKeyCLI() : 
+
+def start_loop(loop):
+    asyncio.set_event_loop(loop)
+    loop.run_forever()
+
+loopKeyHandler = asyncio.new_event_loop()
+threading.Thread(target=start_loop, args=(loopKeyHandler,), daemon=True).start()
+
+def getApiKeyCLI() :
     res = requests.get(f"http://{adress}:8001/get-api-key")
     if (res.status_code == 200) :
         return res.json()["api_key"]
@@ -36,19 +47,23 @@ def loadGamePlayable(apikey) :
     else :
         return f"Unknown Error : {res.status_code}"
 
+
 def handleGame(stdscr, val, nP1, nP2) :
     curses.curs_set(0)
     stdscr.nodelay(True)
     stdscr.keypad(True)
-
     stdscr.clear()
+
     url_sse = f"http://{adress}:8001/events?apikey={val}&idplayer=0"
     url_post = f"http://{adress}:8001/send-message"
+    url_leave = f"http://{adress}:8001/leave-game?apikey={val}"
     started = False
 
     with requests.get(url_sse, stream=True) as r:
         lines = r.iter_lines()
         sock = r.raw._fp.fp
+
+        asyncio.run_coroutine_threadsafe(mainKeyHandler(url_post, val), loopKeyHandler)
 
         buffer = ""
         last_update = ""
@@ -56,23 +71,12 @@ def handleGame(stdscr, val, nP1, nP2) :
         stdscr.addstr(0, 0, f"{nP1}, press ↑ ↓ to move / {nP2}, press w s to move, p to start, q to quit.")
 
         while True:
-            key = stdscr.getch()
-            if key != -1:
-                if key == curses.KEY_UP:
-                    requests.post(url_post, json={"apiKey": val, "message": '{"action": "move", "player2": "up"}'})
-                elif key == curses.KEY_DOWN:
-                    requests.post(url_post, json={"apiKey": val, "message": '{"action": "move", "player2": "down"}'})
-                elif key == ord('w'):
-                    requests.post(url_post, json={"apiKey": val, "message": '{"action": "move", "player1": "up"}'})
-                elif key == ord('s'):
-                    requests.post(url_post, json={"apiKey": val, "message": '{"action": "move", "player1": "down"}'})
-                elif key == ord('p'):
-                    if not started:
-                        started = True
-                        requests.post(url_post, json={"apiKey": val, "message": f'{{"action": "start"}}'})
-                elif key == ord('q'):
-                    break
+            # requests.get(f"http://{adress}:8001/debug")
 
+            key = stdscr.getch()
+            if (key == ord('q')) : 
+                requests.get(url_leave)
+                break
             ready, _, _ = select.select([sock], [], [], 0.01)
             if ready:
                 try:
@@ -89,7 +93,7 @@ def handleGame(stdscr, val, nP1, nP2) :
                         except Exception as e:
                             pass
                 except StopIteration:
-                    break 
+                    break
                 except Exception as e:
                     last_update = f"[Erreur SSE] {str(e)}"
 
@@ -107,6 +111,7 @@ def handleGame2Players(stdscr, val, playerID) :
     stdscr.clear()
     url_sse = f"http://{adress}:8001/events?apikey={val}&idplayer={playerID}"
     url_post = f"http://{adress}:8001/send-message"
+    url_leave = f"http://{adress}:8001/leave-game?apikey={val}"
     started = False
 
     with requests.get(url_sse, stream=True) as r:
@@ -137,7 +142,9 @@ def handleGame2Players(stdscr, val, playerID) :
                         started = True
                         requests.post(url_post, json={"apiKey": val, "message": f'{{"action": "start"}}'})
                 elif key == ord('q'):
+                    requests.get(url_leave)
                     break
+
 
             ready, _, _ = select.select([sock], [], [], 0.01)
             if ready:
@@ -155,7 +162,7 @@ def handleGame2Players(stdscr, val, playerID) :
                         except Exception as e:
                             pass
                 except StopIteration:
-                    break 
+                    break
                 except Exception as e:
                     last_update = f"[Erreur SSE] {str(e)}"
 
@@ -172,7 +179,6 @@ def inputField(stdscr, y, x, prompt, maxL, defaultChar=' '):
     buffer = ""
     while True:
         key = stdscr.getch()
-        
         if key in (curses.KEY_ENTER, 10, 13):
             break
         elif key in (curses.KEY_BACKSPACE, 127, 8):

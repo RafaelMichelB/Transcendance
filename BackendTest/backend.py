@@ -11,6 +11,7 @@ import sys
 import json
 import time
 
+dictActivePlayer = {}
 apiKeysUnplayable = []
 dictApi = {}
 apiKeys = []
@@ -39,32 +40,37 @@ class   RequestParsed :
         self.action = action
 
 
-async def  checkForUpdates(uriKey) :
+from datetime import datetime
+async def  checkForUpdates(uriKey, key) :
     try :
         async with websockets.connect(uriKey) as ws:
             while True:
                 # Attendre la réception d'un message depuis le WebSocket
-                message = await asyncio.wait_for(ws.recv(), timeout=1)  # Attend le message venant du WebSocket
-                print(f"message : {message}", file=sys.stderr)
+                message = await ws.recv() #asyncio.wait_for(ws.recv(), timeout=1)  # Attend le message venant du WebSocket
+                print(f"Ws : {ws}, uriKey : {uriKey} <-> message : {message}", file=sys.stderr)
                 # Formater l'événement SSE (Server-Sent Event)
                 yield f"data: {message}\n\n"
 
         print("[Debug BACKEND checkForUpdate()] - Websocket Closed", file=sys.stderr)
-    except asyncio.TimeoutError :
-        
+#    except asyncio.TimeoutError :       
     except Exception as e :
-        print(f"[checkForUpdates] WebSocket error : {e}", file=sys.stderr)
+        await channel_layer.group_send(
+            key,
+            {
+                "type" : "disconnectUser",
+                "text_data" : "None"
+            }
+        )
+        print(f"[checkForUpdates] WebSocket {ws}  error : {e}", file=sys.stderr)
         yield f"data: WebSocket stop\n\n"
 
 
 
 @app.get("/events")
 async def sse(request: Request, apikey: str = None, idplayer=None):
-    o
-
     rq = RequestParsed(apikey, {})
     if (rq.apiKey) :
-        return StreamingResponse(checkForUpdates(f"{uri}?room={rq.apiKey}"), media_type="text/event-stream")
+        return StreamingResponse(checkForUpdates(f"{uri}?room={rq.apiKey}&userid={idplayer}", rq.apiKey), media_type="text/event-stream")
 
 @app.post("/set-api-key-alone")
 def setApiKeySp(request: Request, apikey:str=None):
@@ -130,8 +136,25 @@ async def sendNewJSON(request: Request):
         )
     # print(f"Reiceived Json : {dictionnaryJson}", file=sys.stderr)
 
-async def stopGameForfait(
-    
+@app.get("/leave-game")
+async def disconnectUser(request:Request, apikey) :
+    rq = RequestParsed(apikey, {})
+    if (rq.apiKey) :
+        print("discoUsr1", file=sys.stderr)
+        dictApi[rq.apiKey] -= 1
+        # if dictApi[rq.apiKey] <= 0 :
+            # print("DiscoUsr2", file=sys.stderr);
+            # dictApi.pop(rq.apiKey)
+        await channel_layer.group_send(
+            rq.apiKey,
+            {
+                "type" : "disconnectUser",
+                "text_data" : "none"
+            }
+        )
+
+
+#async def stopGameForfait(
 
 
 

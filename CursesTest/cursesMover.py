@@ -1,65 +1,42 @@
-import curses
-import time
+from pynput import keyboard
+import asyncio
+import sys
 
-def message_stream():
-    for i in range(20):
-        yield f"Message n°{i}"
-        time.sleep(0.5)
+pressed_keys = set()
+stop_event = asyncio.Event()
 
-def main(stdscr):
-    curses.curs_set(0)
-    stdscr.clear()
-    stdscr.nodelay(False)  # getch() bloquant si besoin
-    curses.noecho()
+def on_press(key):
+    pressed_keys.add(key)
 
-    line = 1  # Position Y d'affichage
-    for msg in message_stream():
-        stdscr.addstr(line, 0, msg)
-        stdscr.refresh()
-        # line += 1
+def on_release(key):
+    if key in pressed_keys:
+        pressed_keys.remove(key)
+    if key == keyboard.Key.esc:
+        print("Escape ressed, stopping listener.", file=sys.stderr)
+        # handler = False
+        stop_event.set()
+        # print("hand: ", handler)
+        return False  # Stop listener
 
-        if line > curses.LINES - 2:
-            stdscr.clear()
-            line = 1
+async def is_pressed():
+    while not stop_event.is_set():
+        # print(handler)
+        if pressed_keys:
+            names = []
+            for k in pressed_keys:
+                try:
+                    names.append(k.char)
+                except AttributeError:
+                    names.append(str(k))
+            print(f"Touchez pressées : {', '.join(names)}")
+        else:
+            print("Aucune touche", file=sys.stderr)
+        await asyncio.sleep(0.5)
 
-    stdscr.addstr(line + 2, 2, "Terminé ! Appuie sur une touche pour quitter.")
-    stdscr.refresh()
-    stdscr.getch()
+async def main():
+    loop = asyncio.get_event_loop()
+    listener = keyboard.Listener(on_press=on_press, on_release=on_release)
+    listener.start()  # Non-bloquant
+    await is_pressed()  # Lancer ta boucle d'affichage
 
-curses.wrapper(main)
-
-# import curses
-
-# def main(stdscr):
-#     # Initialisation
-#     curses.curs_set(0)         # Cache le curseur
-#     stdscr.nodelay(True)       # getch() non bloquant
-#     stdscr.keypad(True)        # Permet les touches spéciales (flèches)
-#     curses.noecho()            # Ne pas afficher les touches
-#     curses.cbreak()            # Mode "caractère par caractère"
-
-#     y, x = 5, 10               # Position de départ
-#     max_y, max_x = stdscr.getmaxyx()
-
-#     while True:
-#         stdscr.clear()
-#         stdscr.addstr(0, 0, "Utilise les flèches pour déplacer. Appuie sur 'q' pour quitter.")
-#         stdscr.addstr(y, x, "[]")  # Le "joueur"
-
-#         key = stdscr.getch()
-
-#         if key == ord('q'):
-#             break
-#         elif key == curses.KEY_UP and y > 1:
-#             y -= 1
-#         elif key == curses.KEY_DOWN and y < max_y - 2:
-#             y += 1
-#         elif key == curses.KEY_LEFT and x > 1:
-#             x -= 1
-#         elif key == curses.KEY_RIGHT and x < max_x - 3:
-#             x += 1
-
-#         stdscr.refresh()
-#         curses.napms(50)  # Petit délai pour éviter de tourner trop vite
-
-# curses.wrapper(main)
+asyncio.run(main())

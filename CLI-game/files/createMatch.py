@@ -22,9 +22,9 @@ def sendGameCreation(stdscr, classScreen, apiKey) :
             time.sleep(0.5)
             return handleGame2Players(stdscr, apiKey, 1)
         time.sleep(0.3)
-        
 
-def sendGameJoining(stdscr, classScreen) :
+
+def sendGameJoining(stdscr, classScreen, apiKey=None) :
     infoGameJoining = classScreen.getSpecificInfo("RoomClassicJoin")
     stdscr.addstr(2, 0, loadInfo(infoGameJoining))
     isRoomAvalaible = False
@@ -47,7 +47,7 @@ def sendGameJoining(stdscr, classScreen) :
             return handleGame2Players(stdscr, inputGameID, 2)
         time.sleep(0.3)
 
-def sendLocalGame(stdscr, classScreen) :
+def sendLocalGame(stdscr, classScreen, apiKey=None) :
     infoSinglePlayer = classScreen.getSpecificInfo("SinglePlayer")
     stdscr.addstr(2, 0, loadInfo(infoSinglePlayer))
     stdscr.refresh()
@@ -58,7 +58,7 @@ def sendLocalGame(stdscr, classScreen) :
     handleGame(stdscr, key, namePlayer1, namePlayer2)
 
 
-def sendLobby(stdscr, classScreen) :
+def sendLobby(stdscr, classScreen, apiKey=None) :
     infoLobby = classScreen.getSpecificInfo("Lobby")
     screenLobby = loadInfo(infoLobby)
     stdscr.addstr(2, 0, screenLobby)
@@ -87,5 +87,15 @@ def main(stdscr):
     print("Hello world", file=sys.stderr)
     screens = Screen()
     return sendLobby(stdscr, screens)
+
+dictFunctionsAllowed = {
+    "sendLobby" : sendLobby,
+    "sendLocalGame" : sendLocalGame,
+    "sendGameJoining" : sendGameJoining,
+    "sendGameCreation" : sendGameCreation
+}
+
+lstFuncBack = []
+lstFuncFront = []
 
 curses.wrapper(main)

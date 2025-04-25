@@ -178,3 +178,9 @@ class GameConsumer(AsyncWebsocketConsumer):
 			# print("Task send_game_update Cancelled", file=sys.stderr)
 			self.t2.cancel()
 			await self.t2
+
+def checkCache() :
+    r = redis.Redis(host='redis', port = 6379, db=0)
+    cleRedis = r.keys('*')
+    print([c.decode('utf-8') for c in cleRedis], file=sys.stderr)
+

@@ -10,6 +10,7 @@ import asyncio
 from urllib.parse import parse_qs
 import sys
 import random
+import redis
 
 def calcAllIntersections(walls, ptRacket1, ptRacket2) :
 	for w in walls:
@@ -30,6 +31,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 		# Extraire le paramètre 'room' de la chaîne de requête
 		self.room_group_name = params.get('room', [None])[0]
 		self.usrID = int(params.get('userid', [2])[0])
+		print("room :", self.room_group_name, file=sys.stderr)
 		print("user ID : ", self.usrID, file=sys.stderr)
 
 		if not self.room_group_name:
@@ -151,15 +153,18 @@ class GameConsumer(AsyncWebsocketConsumer):
 				print("Yes !!!", file=sys.stderr)
 				self.gameSimulation = Movement(BallData(), self.room_group_name, map=self.map, plnb=2, usrID=self.usrID) # Change informations if game module
 				self.t2 = asyncio.create_task(self.run_simulation())
-				# random.seed(42) # TO CHANGE <<--------------<<<<---<<-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------<<<<-
 
 				while self.game_running:
 					await asyncio.sleep(0.2)
 					try:
 						if self.usrID <= 1 :
 							await self.gameSimulation.setRedisCache(self.room_group_name)
+						r = redis.Redis(host='redis', port=6379, db=0)
+						cles_redis = r.keys('*')
+						print([clé.decode('utf-8') for clé in cles_redis], file=sys.stderr)
 						stats = cache.get(f'simulation_state_{self.room_group_name}')
-						print(f"usrID : {self.usrID}\nstats: {stats}", file=sys.stderr)
+						print(f"caches: {str(cache)}", file=sys.stderr)
+						# print(f"usrID : {self.usrID}\nstats: {stats}", file=sys.stderr)
 						await self.channel_layer.group_send(
 							self.room_group_name,
 							{

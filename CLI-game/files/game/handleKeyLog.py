@@ -11,7 +11,7 @@ import pynput
 import asyncio
 from .keyPressed import mainKeyHandler
 
-adress = "10.12.5.6"
+adress = "10.12.6.10"
 
 
 def start_loop(loop):

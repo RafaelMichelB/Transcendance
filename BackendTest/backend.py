@@ -14,6 +14,7 @@ import time
 dictActivePlayer = {}
 apiKeysUnplayable = []
 dictApi = {}
+dictApiSp = {}
 apiKeys = []
 app = FastAPI()
 app.add_middleware(
@@ -75,6 +76,7 @@ async def sse(request: Request, apikey: str = None, idplayer=None):
 @app.post("/set-api-key-alone")
 def setApiKeySp(request: Request, apikey:str=None):
     print(apikey, file=sys.stderr)
+    dictApiSp[apikey] = 1
     apiKeys.append(apikey)
     return JSONResponse(content={"playable": "Game can start"})
 
@@ -141,7 +143,13 @@ async def disconnectUser(request:Request, apikey) :
     rq = RequestParsed(apikey, {})
     if (rq.apiKey) :
         print("discoUsr1", file=sys.stderr)
-        dictApi[rq.apiKey] -= 1
+        try :
+            dictApi[rq.apiKey] -= 1
+        except KeyError:
+            try :
+                dictApiSp[rq.apiKey] -= 1
+            except KeyError:
+                return
         # if dictApi[rq.apiKey] <= 0 :
             # print("DiscoUsr2", file=sys.stderr);
             # dictApi.pop(rq.apiKey)

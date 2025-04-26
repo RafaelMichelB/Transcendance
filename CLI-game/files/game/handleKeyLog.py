@@ -11,8 +11,9 @@ import pynput
 import asyncio
 from .keyPressed import mainKeyHandler
 
-adress = "10.13.5.5"
-
+adress = "10.12.8.5"
+lstFuncFront=[]
+lstFuncBack=[]
 
 def start_loop(loop):
     asyncio.set_event_loop(loop)
@@ -20,6 +21,32 @@ def start_loop(loop):
 
 loopKeyHandler = asyncio.new_event_loop()
 threading.Thread(target=start_loop, args=(loopKeyHandler,), daemon=True).start()
+
+def addFunc(name) :
+    lstFuncFront.append(name)
+
+def handleClassicFuncMove(dictionnary, oldFuncName, newFuncName, stdscr, classScreen) :
+    lstFuncBack.append(oldFuncName)
+    return dictionnary[newFuncName](stdscr, classScreen)
+
+def handleBackward(funcName, dictFunctionsAllowed, apiKey, stdscr, classScreen):
+    if (apiKey != None) :
+        print("Yike")
+        leaveGameCLI(apiKey)
+    lstFuncFront.append(funcName)
+    args = (stdscr, classScreen)
+    if (len(lstFuncBack) > 0) :
+        return dictFunctionsAllowed[lstFuncBack.pop(-1)](*args)
+    return
+
+def handleForward(funcName, dictFunctionsAllowed, apiKey, stdscr, classScreen) :
+    try :
+        nextFunc = lstFuncFront.pop(-1)
+        lstFuncBack.append(funcName)
+        args = (stdscr, classScreen)
+        return dictFunctionsAllowed[nextFunc](*args)
+    except Exception :
+        return
 
 def getApiKeyCLI() :
     res = requests.get(f"http://{adress}:8001/get-api-key")
@@ -47,6 +74,8 @@ def loadGamePlayable(apikey) :
     else :
         return f"Unknown Error : {res.status_code}"
 
+def leaveGameCLI(apiKey) :
+    res=requests.get(f"http://{adress}:8001/leave-game?apikey={apiKey}")
 
 def handleGame(stdscr, val, nP1, nP2) :
     curses.curs_set(0)
@@ -71,12 +100,9 @@ def handleGame(stdscr, val, nP1, nP2) :
         stdscr.addstr(0, 0, f"{nP1}, press ↑ ↓ to move / {nP2}, press w s to move, p to start, q to quit.")
 
         while True:
-            # requests.get(f"http://{adress}:8001/debug")
-
             key = stdscr.getch()
             if (key == ord('q')) : 
-                requests.get(url_leave)
-                break
+                return leaveGameCLI(val)
             ready, _, _ = select.select([sock], [], [], 0.01)
             if ready:
                 try:
@@ -142,8 +168,7 @@ def handleGame2Players(stdscr, val, playerID) :
                         started = True
                         requests.post(url_post, json={"apiKey": val, "message": f'{{"action": "start"}}'})
                 elif key == ord('q'):
-                    requests.get(url_leave)
-                    break
+                    return leaveGameCLI(val)
 
 
             ready, _, _ = select.select([sock], [], [], 0.01)
@@ -195,3 +220,5 @@ def inputField(stdscr, y, x, prompt, maxL, defaultChar=' '):
 
     curses.curs_set(0)
     return buffer
+
+

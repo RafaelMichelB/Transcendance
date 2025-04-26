@@ -1,14 +1,15 @@
 from .dataScreens import Screen, loadInfo
 import time
 import curses
-from .game.handleKeyLog import getApiKeyCLI, setApiKeyCLI, loadGamePlayable, handleGame, setApiKeySpCLI, inputField, handleGame2Players
+from .game.handleKeyLog import getApiKeyCLI, setApiKeyCLI, loadGamePlayable, handleGame, setApiKeySpCLI, inputField, handleGame2Players, handleClassicFuncMove, handleBackward, handleForward, addFunc
 import sys
 
 val = "0000" #getApiKeyCLI() # Replacewith generated output with web to link
 
 dictGameMode = {'1' : "Join regular game", '2' : "Create regular game", '3' : "Join tournament", '4' : "Create tournament", '5' : "Create Local game ", '6' : "Create game versus AI"}
 
-def sendGameCreation(stdscr, classScreen, apiKey) :
+def sendGameCreation(stdscr, classScreen, apiKey=None) :
+    apiKey = getApiKeyCLI()
     infogameCreation = classScreen.getSpecificInfo("RoomClassicCreate")
     isGamePlayable = setApiKeyCLI(apiKey)
     stdscr.addstr(2, 0, loadInfo(infogameCreation))
@@ -21,6 +22,15 @@ def sendGameCreation(stdscr, classScreen, apiKey) :
         if (isGamePlayable == "Game can start") :
             time.sleep(0.5)
             return handleGame2Players(stdscr, apiKey, 1)
+        stdscr.nodelay(True)
+        key = stdscr.getch()
+        if (key == 260) :
+            stdscr.nodelay(False)
+            return handleBackward("sendGameCreation", dictFunctionsAllowed, apiKey, stdscr, classScreen) 
+        if (key == 261) :
+            stdscr.nodelay(False)
+            return handleForward("sendGameCreation", dictFunctionsAllowed, apiKey, stdscr, classScreen)
+        stdscr.nodelay(False)
         time.sleep(0.3)
 
 
@@ -29,6 +39,11 @@ def sendGameJoining(stdscr, classScreen, apiKey=None) :
     stdscr.addstr(2, 0, loadInfo(infoGameJoining))
     isRoomAvalaible = False
     while not isRoomAvalaible :
+        key = stdscr.getch()
+        if key == 260 :
+            return handleBackward("sendGameJoining", dictFunctionsAllowed, apiKey, stdscr, classScreen)
+        if (key == 261) :
+            return handleForward("sendGameJoining", dictFunctionsAllowed, apiKey, stdscr, classScreen)
         stdscr.refresh()
         inputGameID = stdscr.getstr(1 + infoGameJoining["inputPos"][0], infoGameJoining["inputPos"][1]).decode('utf-8')
         isGamePlayable = setApiKeyCLI(inputGameID)
@@ -44,6 +59,7 @@ def sendGameJoining(stdscr, classScreen, apiKey=None) :
         stdscr.refresh()
         if (isGamePlayable == "Game can start") :
             time.sleep(0.5)
+            addFunc('sendGameJoining')
             return handleGame2Players(stdscr, inputGameID, 2)
         time.sleep(0.3)
 
@@ -66,21 +82,24 @@ def sendLobby(stdscr, classScreen, apiKey=None) :
     while True :
         key = stdscr.getch()
         if key != -1 :
+            if (key == 260) :
+                return handleBackward("sendLobby", dictFunctionsAllowed, apiKey, stdscr,classScreen)
+            if (key == 261) :
+                return handleForward("sendLobby", dictFunctionsAllowed, apiKey, stdscr, classScreen)
             stdscr.addstr(16, 0, "|                      Which game mode ? : ____________________                      |")
             stdscr.addstr(1 + infoLobby["inputPos"][0], infoLobby["inputPos"][1], dictGameMode.get(chr(key), "Unknown input"))
             stdscr.refresh()
             time.sleep(0.5)
             if key == ord('1') :
-                return sendGameJoining(stdscr, classScreen)
+                return handleClassicFuncMove(dictFunctionsAllowed, "sendLobby", "sendGameJoining", stdscr,classScreen)
             elif key == ord('2') :
-                apiKey = getApiKeyCLI()
-                return sendGameCreation(stdscr, classScreen, apiKey)
+                return handleClassicFuncMove(dictFunctionsAllowed,"sendLobby", "sendGameCreation", stdscr, classScreen)
             elif key == ord('3') :
                 pass
             elif key == ord('4') :
                 pass
             elif key == ord('5') :
-                return sendLocalGame(stdscr, classScreen)
+                return handleClassicFuncMove(dictFunctionsAllowed, "sendLobby", "sendLocalGame", stdscr, classScreen)
 
 
 def main(stdscr):
@@ -94,8 +113,5 @@ dictFunctionsAllowed = {
     "sendGameJoining" : sendGameJoining,
     "sendGameCreation" : sendGameCreation
 }
-
-lstFuncBack = []
-lstFuncFront = []
 
 curses.wrapper(main)

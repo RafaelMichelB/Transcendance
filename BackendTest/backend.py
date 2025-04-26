@@ -34,7 +34,7 @@ uri = "ws://django:8000/ws/game/"
 
 class   RequestParsed :
     def __init__(self, apiKey, action) :
-        if apiKey in apiKeys :
+        if apiKey in apiKeys or apiKey in apiKeysUnplayable :
             self.apiKey = apiKey
         else :
             self.apiKey = None
@@ -150,9 +150,14 @@ async def disconnectUser(request:Request, apikey) :
                 dictApiSp[rq.apiKey] -= 1
             except KeyError:
                 return
-        # if dictApi[rq.apiKey] <= 0 :
-            # print("DiscoUsr2", file=sys.stderr);
-            # dictApi.pop(rq.apiKey)
+        if dictApi[rq.apiKey] <= 0 :
+            print("DiscoUsr2", file=sys.stderr);
+            dictApi.pop(rq.apiKey)
+            try :
+                apiKeys.remove(apikey)
+            except Exception:
+                apiKeysUnplayable.remove(apikey)
+
         await channel_layer.group_send(
             rq.apiKey,
             {

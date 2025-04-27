@@ -64,12 +64,20 @@ class GameConsumer(AsyncWebsocketConsumer):
 	async def receive(self, text_data):
 		# print(type(text_data).__name__, file=sys.stderr)
 		data = json.loads(text_data)
+		print(f"Data: {data}",file=sys.stderr)
 		# print(type(data).__name__, file=sys.stderr)
 		# print(f"???---??? : {data}", file=sys.stderr)
 		action = data.get("action")
 
 		# print(action, file=sys.stderr)
-		if action == "start":
+		if action == "disconnect":
+			print("yaay disconnection", file=sys.stderr)
+			await self.disconnectUser(text_data)
+        elif action == "forfait" :
+            plId = data.get["player"]
+            if plId == self.usrId :
+                return dumps #<<<<----------------------------- REturn sdit'a win ou loose. 
+		elif action == "start":
 			mapString = data.get("map", "default.json")
 			# INTEGRATE MAP CHECKER 
 			if not self.game_running:
@@ -125,12 +133,12 @@ class GameConsumer(AsyncWebsocketConsumer):
 			print("yikes", file=sys.stderr)
 			await self.gameSimulation.stopSimulation()
 		print("Disconnecteed from game !",file=sys.stderr)
-		if self.t2 is not None : 
+		if self.t2 is not None :
 			self.task.cancel()
 			print("Yes t2 cancel", file=sys.stderr)
 			await self.task
 			cache.delete(f"simulation_state_{self.room_group_name}")
-		await self.close()
+			await self.close()
 
 	async def game_update(self, event):
 		game_stats = event.get('game_stats', {})

@@ -85,7 +85,7 @@ def handleGame(stdscr, val, nP1, nP2) :
 
     url_sse = f"http://{adress}:8001/events?apikey={val}&idplayer=0"
     url_post = f"http://{adress}:8001/send-message"
-    url_leave = f"http://{adress}:8001/leave-game?apikey={val}"
+    url_leave = f"http://{adress}:8001/leave-game?apikey={val}&idplayer=0"
     started = False
 
     with requests.get(url_sse, stream=True) as r:
@@ -137,7 +137,7 @@ def handleGame2Players(stdscr, val, playerID) :
     stdscr.clear()
     url_sse = f"http://{adress}:8001/events?apikey={val}&idplayer={playerID}"
     url_post = f"http://{adress}:8001/send-message"
-    url_leave = f"http://{adress}:8001/leave-game?apikey={val}"
+    url_leave = f"http://{adress}:8001/leave-game?apikey={val}&idplayer={playerID}"
     started = False
 
     with requests.get(url_sse, stream=True) as r:

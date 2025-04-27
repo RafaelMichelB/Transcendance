@@ -47,7 +47,7 @@ async def  checkForUpdates(uriKey, key) :
         async with websockets.connect(uriKey) as ws:
             while True:
                 # Attendre la réception d'un message depuis le WebSocket
-                message = await ws.recv() #asyncio.wait_for(ws.recv(), timeout=1)  # Attend le message venant du WebSocket
+                message = await ws.recv() #asyncio.wait_for(ws.recv(), timeout=10) #await ws.recv  # Attend le message venant du WebSocket
                 print(f"Ws : {ws}, uriKey : {uriKey} <-> message : {message}", file=sys.stderr)
                 # Formater l'événement SSE (Server-Sent Event)
                 yield f"data: {message}\n\n"
@@ -55,13 +55,6 @@ async def  checkForUpdates(uriKey, key) :
         print("[Debug BACKEND checkForUpdate()] - Websocket Closed", file=sys.stderr)
 #    except asyncio.TimeoutError :       
     except Exception as e :
-        await channel_layer.group_send(
-            key,
-            {
-                "type" : "disconnectUser",
-                "text_data" : "None"
-            }
-        )
         print(f"[checkForUpdates] WebSocket {ws}  error : {e}", file=sys.stderr)
         yield f"data: WebSocket stop\n\n"
 
@@ -139,32 +132,28 @@ async def sendNewJSON(request: Request):
     # print(f"Reiceived Json : {dictionnaryJson}", file=sys.stderr)
 
 @app.get("/leave-game")
-async def disconnectUser(request:Request, apikey) :
+async def disconnectUser(request:Request, apikey, idplayer) :
     rq = RequestParsed(apikey, {})
     if (rq.apiKey) :
-        print("discoUsr1", file=sys.stderr)
-        try :
-            dictApi[rq.apiKey] -= 1
-        except KeyError:
-            try :
-                dictApiSp[rq.apiKey] -= 1
-            except KeyError:
-                return
-        if dictApi[rq.apiKey] <= 0 :
-            print("DiscoUsr2", file=sys.stderr);
-            dictApi.pop(rq.apiKey)
-            try :
-                apiKeys.remove(apikey)
-            except Exception:
-                apiKeysUnplayable.remove(apikey)
-
         await channel_layer.group_send(
             rq.apiKey,
             {
-                "type" : "disconnectUser",
-                "text_data" : "none"
+                "type" : "tempReceived",
+                "text_data" : f'{{"action" : "forfait", "player" : {idplayer}}}'
             }
         )
+        print("discoUsr1", file=sys.stderr)
+        try :
+            dictApi.pop(rq.apiKey)
+        except KeyError:
+            try :
+                dictApiSp.pop(rq.apiKey)
+            except KeyError:
+                return
+        try :
+            apiKeys.remove(apikey)
+        except Exception:
+            apiKeysUnplayable.remove(apikey)
 
 
 #async def stopGameForfait(

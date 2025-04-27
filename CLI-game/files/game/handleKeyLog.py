@@ -11,7 +11,7 @@ import pynput
 import asyncio
 from .keyPressed import mainKeyHandler
 
-adress = "10.12.8.5"
+adress = "127.0.0.1"
 lstFuncFront=[]
 lstFuncBack=[]
 
@@ -30,9 +30,9 @@ def handleClassicFuncMove(dictionnary, oldFuncName, newFuncName, stdscr, classSc
     return dictionnary[newFuncName](stdscr, classScreen)
 
 def handleBackward(funcName, dictFunctionsAllowed, apiKey, stdscr, classScreen):
-    if (apiKey != None) :
-        print("Yike")
-        leaveGameCLI(apiKey)
+    # if (apiKey != None) :
+    #     print("Yike")
+    #     leaveGameCLI(apiKey)
     lstFuncFront.append(funcName)
     args = (stdscr, classScreen)
     if (len(lstFuncBack) > 0) :
@@ -75,7 +75,7 @@ def loadGamePlayable(apikey) :
         return f"Unknown Error : {res.status_code}"
 
 def leaveGameCLI(apiKey) :
-    res=requests.get(f"http://{adress}:8001/leave-game?apikey={apiKey}")
+    res=requests.get(f"http://{adress}:8001/leave-game?apikey={apiKey}&idplayer=0")
 
 def handleGame(stdscr, val, nP1, nP2) :
     curses.curs_set(0)
@@ -128,6 +128,47 @@ def handleGame(stdscr, val, nP1, nP2) :
 
             time.sleep(0.01)
 
+def handleResult(stdscr, apikey, playerID) :
+    stringResult = """+------------------------------------------------------------------------------------+
+|                                                                                    |
+|                                                                                    |
+|                                                                                    |
+|                                                                                    |
+|                                                                                    |
+|                                Match Finished                                      |
+|                                                                                    |
+|                                                                                    |
+|                                   You                                              |
+|                                                                                    |
+|                                                                                    |
+|              press L to back tolobby                                               |
+|              press Q to quit program                                               |
+|                                                                                    |
+|                                                                                    |
+|                                                                                    |
+|                                                                                    |
+|                                                                                    |
+|                                                                                    |
+|                                                                                    |
+|                                                                                    |
+|                                                                                    |
+|                                                                                    |
++------------------------------------------------------------------------------------+"""
+    curses.endwin()
+    input(stringResult)
+    stdscr.refresh()
+    res=requests.get(f"http://{adress}:8001/leave-game?apikey={apikey}&idplayer={playerID}")
+    stdscr.addstr(2, 0, stringResult)
+    if dictionnaryResult["Winning"] :
+        stdscr.addstr(10, 41, f'Won |-> {dictionnaryResult["finalScore"]["Player1"]} / {dictionnaryResult["finalScore"]["Player2"]} <-|')
+        stdscr.refresh()
+        while True :
+            key = stdscr.getch()
+            if key == ord('l') :
+                return sendLobby(stdscr)
+            elif key == ord('q') :
+                return
+
 
 def handleGame2Players(stdscr, val, playerID) :
     curses.curs_set(0)
@@ -168,7 +209,7 @@ def handleGame2Players(stdscr, val, playerID) :
                         started = True
                         requests.post(url_post, json={"apiKey": val, "message": f'{{"action": "start"}}'})
                 elif key == ord('q'):
-                    return leaveGameCLI(val)
+                    return handleResult(stdscr, val, playerID)
 
 
             ready, _, _ = select.select([sock], [], [], 0.01)
@@ -190,7 +231,9 @@ def handleGame2Players(stdscr, val, playerID) :
                     break
                 except Exception as e:
                     last_update = f"[Erreur SSE] {str(e)}"
-
+            # curses.endwin()
+            # input(last_update)
+            # stdscr.refresh()
             stdscr.addstr(2, 0, f"game State :\n{last_update}\n\nScores : {scoresString}")
             stdscr.refresh()
 

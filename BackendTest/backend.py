@@ -134,6 +134,7 @@ async def sendNewJSON(request: Request):
 @app.get("/leave-game")
 async def disconnectUser(request:Request, apikey, idplayer) :
     rq = RequestParsed(apikey, {})
+    print("---------------------6>   ->  -> Trying to disconnect ", file=sys.stderr)
     if (rq.apiKey) :
         await channel_layer.group_send(
             rq.apiKey,
@@ -155,7 +156,17 @@ async def disconnectUser(request:Request, apikey, idplayer) :
         except Exception:
             apiKeysUnplayable.remove(apikey)
 
-
+urlRequests = "http://django:8000/"
+@app.get("/actual-state")
+def getActualPosition(request:Request, apikey) :
+    print(f"{urlRequests}api/simulation/?apikey={apikey}", file=sys.stderr)
+    res = requests.get(f"{urlRequests}api/simulation/?apikey={apikey}")
+    if res.status_code != 200 :
+        print(f"Error code: {res.status_code}\nData : ", file=sys.stderr)
+        return
+    else :
+        print(f"Data :\n{res.json()}", file=sys.stderr )
+        return res.json()
 #async def stopGameForfait(
 
 

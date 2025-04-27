@@ -76,15 +76,17 @@ class GameConsumer(AsyncWebsocketConsumer):
 			await self.disconnectUser(text_data)
 			# plId = data.get["player"]
 		elif action == "forfait" :
+			print("Forfaited", file=sys.stderr)
 			if self.usrID == 1 :
-				await self.stopSimulation()
+				print("Stopped simulation", file=sys.stderr)
+				await self.gameSimulation.stopSimulation()
 			if self.t2 is not None:
 				self.task.cancel()
 				await self.task
-			if plId == self.usrID :
-				await self.send(text_data=json.dumps({"finalStats" : {"Winning" : False, "finalScore" : {f"Player{self.usrID}" : cache.get(f"simulation_state_{self.room_group_name}")[f"team{self.usrID}score"], f"Player{2 - (self.usrID != 1)}" : 5}}}))
-			elif plId == 2 - (self.usrID != 1) :
-				await self.send(text_data=json.dumps({"finalStats" : {"Winning" : True, finalScore : {f"Player{self.usrID}" : 5, f"Player{2 - (self.usrID != 1)}" : cache.get(f"simulation_state_{self.room_group_name}")[f"team{2 - (self.usrID != 1)}score"]}}}))
+			plId = data.get("player")
+			stats = cache.get(f'simulation_state_{self.room_group_name}')
+			stats[f"team{2 - (plId != 1)}score"] = 5
+			cache.set(f'simulation_state_{self.room_group_name}', stats, timeout=None)
 		elif action == "start":
 			mapString = data.get("map", "default.json")
 			# INTEGRATE MAP CHECKER 

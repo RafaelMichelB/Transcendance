@@ -255,43 +255,6 @@ def getAsciiTerrain(map:Map, rcktDict, relation=30) :
     
     return lstFinal
 
-def handleResult(stdscr, dictionnaryResult) :
-    stringResult = """+------------------------------------------------------------------------------------+
-|                                                                                    |
-|                                                                                    |
-|                                                                                    |
-|                                                                                    |
-|                                                                                    |
-|                                Match Finished                                      |
-|                                                                                    |
-|                                                                                    |
-|                                   You                                              |
-|                                                                                    |
-|                                                                                    |
-|              press L to back tolobby                                               |
-|              press Q to quit program                                               |
-|                                                                                    |
-|                                                                                    |
-|                                                                                    |
-|                                                                                    |
-|                                                                                    |
-|                                                                                    |
-|                                                                                    |
-|                                                                                    |
-|                                                                                    |
-|                                                                                    |
-+------------------------------------------------------------------------------------+"""
-    stdscr.addstr(2, 0, stringResult)
-    if dictionnaryResult["Winning"] :
-        stdscr.addstr(10, 41, f'Won |-> {dictionnaryResult["finalScore"]["Player1"]} / {dictionnaryResult["finalScore"]["Player2"]} <-|')
-        stdscr.refresh()
-        while True :
-            key = stdscr.getch()
-            if key == ord('l') :
-                return sendLobby(stdscr)
-            elif key == ord('q') :
-                return
-
 
 def printState(mapList, ballCoo, relation=30) :
     ascciBallPos = [round(ballCoo[0] / relation), round(ballCoo[1] / relation)]
@@ -309,13 +272,8 @@ def printState(mapList, ballCoo, relation=30) :
     return toReturn
 
 def mainPrinter(racketDictionnary, stdscr, key=None, map=Map()) :
-    # if "game_stats" in racketDictionnary :
-        # print("IFFFF ", file=sys.stderr)
     ls = getAsciiTerrain(map, racketDictionnary)
     return printState(ls, racketDictionnary['game_stats']['ball']['position'])
-    # else:
-        # print("HEYYYY elsei", file=sys.stderr)
-        # return handleResult(racketDictionnary["finalStats"], stdscr)
 
 
         # return (racketDictionnary["finalScore"], stdscr, key)

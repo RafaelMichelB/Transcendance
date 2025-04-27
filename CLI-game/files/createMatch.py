@@ -74,7 +74,7 @@ def sendLocalGame(stdscr, classScreen, apiKey=None) :
     handleGame(stdscr, key, namePlayer1, namePlayer2)
 
 
-def sendLobby(stdscr, classScreen, apiKey=None) :
+def sendLobby(stdscr, classScreen=Screen(), apiKey=None) :
     infoLobby = classScreen.getSpecificInfo("Lobby")
     screenLobby = loadInfo(infoLobby)
     stdscr.addstr(2, 0, screenLobby)

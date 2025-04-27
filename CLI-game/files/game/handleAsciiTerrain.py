@@ -3,6 +3,8 @@ import os
 import time
 import json
 import curses
+# from files.createMatch import sendLobby
+
 class Point() :
     '''Point classes, permit an easier work on the calc, with overload operator'''
     def __init__(self, xPoint : float, yPoint : float) :
@@ -182,7 +184,7 @@ class Map() :
                 self.winningTeam2 = [Point(winningT2[0][0], winningT2[0][1]), Point(winningT2[1][0], winningT2[1][1])]
             else :
                 self.winningTeam2 = [Point(1005, 0), Point(1005, 600)]
-            
+
     def borderX(self) :
         minX = 99999999
         maxX = -99999999
@@ -211,6 +213,7 @@ class Map() :
                 maxY = elements[1].y
         return (minY, maxY)
 
+
 def calcYsement(A, B):
     x1, y1 = A
     x2, y2 = B
@@ -234,7 +237,6 @@ def calcYsement(A, B):
 def getAsciiTerrain(map:Map, rcktDict, relation=30) :
     minX, maxX = map.borderX()
     minY, maxY = map.borderY()
-
     oneCharEquivalentX = round((maxX - minX) / relation)
     oneCharEquivalentY = round((maxY - minY) / relation)
     valuepl1 = rcktDict["game_stats"]["player1"]
@@ -253,6 +255,44 @@ def getAsciiTerrain(map:Map, rcktDict, relation=30) :
     
     return lstFinal
 
+def handleResult(stdscr, dictionnaryResult) :
+    stringResult = """+------------------------------------------------------------------------------------+
+|                                                                                    |
+|                                                                                    |
+|                                                                                    |
+|                                                                                    |
+|                                                                                    |
+|                                Match Finished                                      |
+|                                                                                    |
+|                                                                                    |
+|                                   You                                              |
+|                                                                                    |
+|                                                                                    |
+|              press L to back tolobby                                               |
+|              press Q to quit program                                               |
+|                                                                                    |
+|                                                                                    |
+|                                                                                    |
+|                                                                                    |
+|                                                                                    |
+|                                                                                    |
+|                                                                                    |
+|                                                                                    |
+|                                                                                    |
+|                                                                                    |
++------------------------------------------------------------------------------------+"""
+    stdscr.addstr(2, 0, stringResult)
+    if dictionnaryResult["Winning"] :
+        stdscr.addstr(10, 41, f'Won |-> {dictionnaryResult["finalScore"]["Player1"]} / {dictionnaryResult["finalScore"]["Player2"]} <-|')
+        stdscr.refresh()
+        while True :
+            key = stdscr.getch()
+            if key == ord('l') :
+                return sendLobby(stdscr)
+            elif key == ord('q') :
+                return
+
+
 def printState(mapList, ballCoo, relation=30) :
     ascciBallPos = [round(ballCoo[0] / relation), round(ballCoo[1] / relation)]
     toReturn = ""
@@ -268,27 +308,35 @@ def printState(mapList, ballCoo, relation=30) :
         toReturn += "\n"
     return toReturn
 
-def mainPrinter(racketDictionnary, map=Map()) :
+def mainPrinter(racketDictionnary, stdscr, key=None, map=Map()) :
+    # if "game_stats" in racketDictionnary :
+        # print("IFFFF ", file=sys.stderr)
     ls = getAsciiTerrain(map, racketDictionnary)
     return printState(ls, racketDictionnary['game_stats']['ball']['position'])
+    # else:
+        # print("HEYYYY elsei", file=sys.stderr)
+        # return handleResult(racketDictionnary["finalStats"], stdscr)
+
+
+        # return (racketDictionnary["finalScore"], stdscr, key)
 
 # racketDictionnary = {
-#     "game_stats": {
-#         "player1": 
-#             [[0, 250], [0, 350]],
-#         "player2": 
-#             [[1000, 250], [1000, 350]], 
-#         "ball": {
-#             "position": 
-#                 [500, 425], 
-#             "speed": 
-#                 [90, 0]
-#                 }, 
-#         "team1Score": 0,
-#         "team2Score": 0
-#         }
-#     }
-
+    # "game_stats": {
+        # "player1": 
+            # [[0, 250], [0, 350]],
+        # "player2": 
+        # [[1000, 250], [1000, 350]], 
+        # "ball": {
+            # "position": 
+                # [500, 425], 
+            # "speed": 
+                # [90, 0]
+                # }, 
+        # "team1Score": 0,
+        # "team2Score": 0
+        # }
+    # }
+# mainPrinter(
 # ls = getAsciiTerrain(Map(), racketDictionnary)
 
 # print(printState(ls, [600, 225]))

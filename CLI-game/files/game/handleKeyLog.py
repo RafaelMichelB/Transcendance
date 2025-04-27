@@ -114,7 +114,7 @@ def handleGame(stdscr, val, nP1, nP2) :
                             content = "{wwwd}"
                         try:
                             dico = json.loads(content)
-                            last_update = mainPrinter(dico)
+                            last_update = mainPrinter(dico, stdscr, val)
                             scoresString = f"{nP1} : {dico['game_stats']['team1Score']}                 ||                 {nP2} : {dico['game_stats']['team2Score']}\n"
                         except Exception as e:
                             pass
@@ -182,7 +182,7 @@ def handleGame2Players(stdscr, val, playerID) :
                             content = "{wwwd}"
                         try:
                             dico = json.loads(content)
-                            last_update = mainPrinter(dico)
+                            last_update = mainPrinter(dico, stdscr)
                             scoresString = f"{1} : {dico['game_stats']['team1Score']}                 ||                 {2} : {dico['game_stats']['team2Score']}\n"
                         except Exception as e:
                             pass

@@ -1,4 +1,5 @@
 import json
+import time
 from django.core.cache import cache
 from channels.generic.websocket import AsyncWebsocketConsumer
 from serverPong.ball import Movement, BallData, calcIntersections
@@ -77,15 +78,15 @@ class GameConsumer(AsyncWebsocketConsumer):
 			# plId = data.get["player"]
 		elif action == "forfait" :
 			print("Forfaited", file=sys.stderr)
-			if self.usrID == 1 :
-				print("Stopped simulation", file=sys.stderr)
-				await self.gameSimulation.stopSimulation()
-			if self.t2 is not None:
-				self.task.cancel()
-				await self.task
+			# if self.usrID == 1 :
+				# print("Stopped simulation", file=sys.stderr)
+				# await self.gameSimulation.stopSimulation()
+			# if self.t2 is not None:
+				# self.task.cancel()
+				# await self.task
 			plId = data.get("player")
 			stats = cache.get(f'simulation_state_{self.room_group_name}')
-			stats[f"team{2 - (plId != 1)}score"] = 5
+			stats[f"team{2 - (plId != 1)}Score"] = 5
 			cache.set(f'simulation_state_{self.room_group_name}', stats, timeout=None)
 		elif action == "start":
 			mapString = data.get("map", "default.json")
@@ -168,6 +169,22 @@ class GameConsumer(AsyncWebsocketConsumer):
 				while self.game_running:
 					await asyncio.sleep(0.2)
 					try:
+						stats = cache.get(f"simulation_state_{self.room_group_name}")
+						print(f"statissssss : {stats}", file=sys.stderr)
+						if (stats.get("team1Score", 0) >= 5 or stats.get("team2Score", 0) >= 5) and self.usrID == 1:
+							print("Yaaaaay stoping game", file=sys.stderr)
+							await self.channel_layer.group_send(
+								self.room_group_name,
+								{
+									"type" : "game_update",
+									"game_stats" : stats
+								}
+							)
+							# time.sleep(1)
+							if self.t2 is not None :
+								self.task.cancel()
+								await self.task
+							self.gameSimulation.stopSimulation()
 						if self.usrID <= 1 :
 							await self.gameSimulation.setRedisCache(self.room_group_name)
 						r = redis.Redis(host='redis', port=6379, db=0)
@@ -182,7 +199,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 								"type": "game_update",
 								"game_stats": stats,
 							}
-						)
+                        )
 					except Exception as e:
 						print(f"!!! Failed to send update: {e}", file=sys.stderr)
 		except asyncio.CancelledError:

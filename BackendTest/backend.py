@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.responses import StreamingResponse
 import uuid
+import requests
 from channels_redis.core import RedisChannelLayer
 from asgiref.sync import async_to_sync
 import websockets
@@ -131,8 +132,8 @@ async def sendNewJSON(request: Request):
         )
     # print(f"Reiceived Json : {dictionnaryJson}", file=sys.stderr)
 
-@app.get("/leave-game")
-async def disconnectUser(request:Request, apikey, idplayer) :
+@app.get("/forfait-game")
+async def forfaitUser(request:Request, apikey, idplayer) :
     rq = RequestParsed(apikey, {})
     print("---------------------6>   ->  -> Trying to disconnect ", file=sys.stderr)
     if (rq.apiKey) :
@@ -143,18 +144,41 @@ async def disconnectUser(request:Request, apikey, idplayer) :
                 "text_data" : f'{{"action" : "forfait", "player" : {idplayer}}}'
             }
         )
-        print("discoUsr1", file=sys.stderr)
         try :
-            dictApi.pop(rq.apiKey)
-        except KeyError:
+            dictApi.pop(apikey)
+        except KeyError :
             try :
-                dictApiSp.pop(rq.apiKey)
-            except KeyError:
+                dictApiSp.pop(apikey)
+            except KeyError :
                 return
         try :
             apiKeys.remove(apikey)
-        except Exception:
+        except Exception :
             apiKeysUnplayable.remove(apikey)
+
+@app.get("/leave-game")
+async def disconnectUsr(request:Request, apikey) :
+    print("disco usr", file=sys.stderr)
+    await channel_layer.group_send(
+        apikey,
+        {
+            "type" : "tempReceived",
+            "text_data" : "None"
+        }
+    )
+    try :
+        dictApi.pop(apikey)
+    except KeyError :
+        try :
+            dictApiSp.pop(apikey)
+        except KeyError :
+            return
+    try :
+        apiKeys.remove(apikey)
+    except Exception :
+        apiKeysUnplayable.remove(apikey)
+
+
 
 urlRequests = "http://django:8000/"
 @app.get("/actual-state")

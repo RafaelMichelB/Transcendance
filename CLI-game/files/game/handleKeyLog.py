@@ -10,6 +10,7 @@ from .handleAsciiTerrain import mainPrinter
 import pynput
 import asyncio
 from .keyPressed import mainKeyHandler
+from files.commonFunc inport sendLobby
 
 adress = "127.0.0.1"
 lstFuncFront=[]
@@ -77,6 +78,8 @@ def loadGamePlayable(apikey) :
 def leaveGameCLI(apiKey) :
     res=requests.get(f"http://{adress}:8001/leave-game?apikey={apiKey}&idplayer=0")
 
+# def handleForfait(apikey, playerID) :
+    # e
 def handleGame(stdscr, val, nP1, nP2) :
     curses.curs_set(0)
     stdscr.nodelay(True)
@@ -101,7 +104,7 @@ def handleGame(stdscr, val, nP1, nP2) :
 
         while True:
             key = stdscr.getch()
-            if (key == ord('q')) : 
+            if (key == ord('q')) :
                 return leaveGameCLI(val)
             ready, _, _ = select.select([sock], [], [], 0.01)
             if ready:
@@ -128,7 +131,8 @@ def handleGame(stdscr, val, nP1, nP2) :
 
             time.sleep(0.01)
 
-def handleResult(stdscr, apikey, playerID) :
+def handleResult(stdscr, apikey, playerID, dictionnaryResult) :
+    from files.createMatch import sendLobby
     stringResult = """+------------------------------------------------------------------------------------+
 |                                                                                    |
 |                                                                                    |
@@ -154,20 +158,18 @@ def handleResult(stdscr, apikey, playerID) :
 |                                                                                    |
 |                                                                                    |
 +------------------------------------------------------------------------------------+"""
-    curses.endwin()
-    input(stringResult)
-    stdscr.refresh()
-    res=requests.get(f"http://{adress}:8001/leave-game?apikey={apikey}&idplayer={playerID}")
     stdscr.addstr(2, 0, stringResult)
-    if dictionnaryResult["Winning"] :
-        stdscr.addstr(10, 41, f'Won |-> {dictionnaryResult["finalScore"]["Player1"]} / {dictionnaryResult["finalScore"]["Player2"]} <-|')
-        stdscr.refresh()
-        while True :
-            key = stdscr.getch()
-            if key == ord('l') :
-                return sendLobby(stdscr)
-            elif key == ord('q') :
-                return
+    if (dictionnaryResult[playerID] >= 5) :
+        stdscr.addstr(11, 41, f'Won |-> 5 / {dictionnaryResult[2 - (playerID != 1)]} <-|')
+    else :
+        stdscr.addstr(11, 41, f'Lost |-> {dictionnaryResult[playerID]} / 5 <-|')
+    stdscr.refresh()
+    while True :
+        key = stdscr.getch()
+        if key == ord('l') :
+            return sendLobby(stdscr)
+        elif key == ord('q') :
+            return
 
 
 def handleGame2Players(stdscr, val, playerID) :
@@ -178,12 +180,13 @@ def handleGame2Players(stdscr, val, playerID) :
     stdscr.clear()
     url_sse = f"http://{adress}:8001/events?apikey={val}&idplayer={playerID}"
     url_post = f"http://{adress}:8001/send-message"
-    url_leave = f"http://{adress}:8001/leave-game?apikey={val}&idplayer={playerID}"
+    # url_leave = f"http://{adress}:8001/leave-game?apikey={val}&idplayer={playerID}"
     started = False
 
-    with requests.get(url_sse, stream=True) as r:
+    with requests.get(url_sse, stream=True, timeout=5) as r:
         lines = r.iter_lines()
         sock = r.raw._fp.fp
+        stopped = False
 
         buffer = ""
         last_update = ""
@@ -209,8 +212,10 @@ def handleGame2Players(stdscr, val, playerID) :
                         started = True
                         requests.post(url_post, json={"apiKey": val, "message": f'{{"action": "start"}}'})
                 elif key == ord('q'):
-                    return handleResult(stdscr, val, playerID)
-
+                    stdscr.addstr(4, 0, "[DEBUG] request.get()")
+                    stdscr.refresh()
+                    requests.get(f"http://{adress}:8001/forfait-game?apikey={val}&idplayer={playerID}")
+                    # r.close()
 
             ready, _, _ = select.select([sock], [], [], 0.01)
             if ready:
@@ -223,21 +228,30 @@ def handleGame2Players(stdscr, val, playerID) :
                             content = "{wwwd}"
                         try:
                             dico = json.loads(content)
-                            last_update = mainPrinter(dico, stdscr)
-                            scoresString = f"{1} : {dico['game_stats']['team1Score']}                 ||                 {2} : {dico['game_stats']['team2Score']}\n"
+                            if (dico['game_stats']["team1Score"] >= 5 or dico["game_stats"]["team2Score"] >= 5) :
+                                # stopped = True
+                                dictionnaryResult = {1 : dico['game_stats']['team1Score'], 2 : dico["game_stats"]["team2Score"]}
+                                break
+                                # stdscr.addstr(3, 0, "[ DEBUG ] HANDLERESULT ")
+                                # stdscr.refresh()
+                                # return handleResult(stdscr, val, playerID, dictionnaryResult)
+                                # break
+
+                            if not stopped :
+                                last_update = mainPrinter(dico, stdscr)
+                                scoresString = f"{1} : {dico['game_stats']['team1Score']}                 ||                 {2} : {dico['game_stats']['team2Score']}\n"
                         except Exception as e:
                             pass
+                    if not stopped :
+                        stdscr.addstr(2, 0, f"game State :\n{last_update}\n\nScores : {scoresString}")
+                        stdscr.refresh()
                 except StopIteration:
                     break
                 except Exception as e:
                     last_update = f"[Erreur SSE] {str(e)}"
-            # curses.endwin()
-            # input(last_update)
-            # stdscr.refresh()
-            stdscr.addstr(2, 0, f"game State :\n{last_update}\n\nScores : {scoresString}")
-            stdscr.refresh()
 
             time.sleep(0.01)
+        return handleResult(stdscr, val, playerID, dictionnaryResult)
 
 def inputField(stdscr, y, x, prompt, maxL, defaultChar=' '):
     stdscr.addstr(y, x, prompt)

@@ -37,17 +37,17 @@ services:
   #   networks :
   #     - redis_network
 
-  #aimodule:
-  #    build :
-  #    context : .
-  #    dockerfile: ./AI-docker/Dockerfile
-  #  container_name : iaDocker
-  #  ports:
-  #    - "8003:8000"
-  #  volumes:
-  #    - ./AI-docker:/app
-  #  networks:
-  #    - redis_network
+  aimodule:
+    build :
+      context : .
+      dockerfile: ./AI-docker/Dockerfile
+    container_name : iaDocker
+    ports:
+      - "8003:8000"
+    volumes:
+      - ./AI-docker:/app
+    networks:
+      - redis_network
 
 
   redis:

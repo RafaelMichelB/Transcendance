@@ -62,10 +62,10 @@ async def  checkForUpdates(uriKey, key) :
 
 
 @app.get("/events")
-async def sse(request: Request, apikey: str = None, idplayer=None):
+async def sse(request: Request, apikey: str = None, AI=False, idplayer=None):
     rq = RequestParsed(apikey, {})
     if (rq.apiKey) :
-        return StreamingResponse(checkForUpdates(f"{uri}?room={rq.apiKey}&userid={idplayer}", rq.apiKey), media_type="text/event-stream")
+        return StreamingResponse(checkForUpdates(f"{uri}?room={rq.apiKey}&userid={idplayer}&AI={AI}", rq.apiKey), media_type="text/event-stream")
 
 @app.post("/set-api-key-alone")
 def setApiKeySp(request: Request, apikey:str=None):

@@ -32,6 +32,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 		# Extraire le paramètre 'room' de la chaîne de requête
 		self.room_group_name = params.get('room', [None])[0]
 		self.usrID = int(params.get('userid', [2])[0])
+		self.AI = bool(params.get("AI", [False])[0])
 
 		print("room :", self.room_group_name, file=sys.stderr)
 		print("user ID : ", self.usrID, file=sys.stderr)

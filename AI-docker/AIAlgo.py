@@ -33,4 +33,5 @@ def sendInfo(apiKey) :
     except Exception as e:
         pass
 
-getActualPosition("17c3015f-fb62-450d-bdf9-9bc54f41bdf1")
+# getActualPosition("17c3015f-fb62-450d-bdf9-9bc54f41bdf1")
+

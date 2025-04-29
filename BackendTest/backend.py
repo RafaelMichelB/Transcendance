@@ -163,7 +163,7 @@ async def disconnectUsr(request:Request, apikey) :
         apikey,
         {
             "type" : "tempReceived",
-            "text_data" : "None"
+            "text_data" : '{"action" : "disconnect"}'
         }
     )
     try :

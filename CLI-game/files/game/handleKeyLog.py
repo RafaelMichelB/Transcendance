@@ -10,7 +10,7 @@ from .handleAsciiTerrain import mainPrinter
 import pynput
 import asyncio
 from .keyPressed import mainKeyHandler
-from files.commonFunc inport sendLobby
+from files.dataScreens import Screen
 
 adress = "127.0.0.1"
 lstFuncFront=[]
@@ -28,14 +28,14 @@ def addFunc(name) :
 
 def handleClassicFuncMove(dictionnary, oldFuncName, newFuncName, stdscr, classScreen) :
     lstFuncBack.append(oldFuncName)
-    return dictionnary[newFuncName](stdscr, classScreen)
+    return dictionnary[newFuncName](stdscr, classScreen, dictionnary)
 
 def handleBackward(funcName, dictFunctionsAllowed, apiKey, stdscr, classScreen):
     # if (apiKey != None) :
     #     print("Yike")
     #     leaveGameCLI(apiKey)
     lstFuncFront.append(funcName)
-    args = (stdscr, classScreen)
+    args = (stdscr, classScreen, dictFunctionsAllowed)
     if (len(lstFuncBack) > 0) :
         return dictFunctionsAllowed[lstFuncBack.pop(-1)](*args)
     return
@@ -44,7 +44,7 @@ def handleForward(funcName, dictFunctionsAllowed, apiKey, stdscr, classScreen) :
     try :
         nextFunc = lstFuncFront.pop(-1)
         lstFuncBack.append(funcName)
-        args = (stdscr, classScreen)
+        args = (stdscr, classScreen, dictFunctionsAllowed)
         return dictFunctionsAllowed[nextFunc](*args)
     except Exception :
         return
@@ -80,7 +80,7 @@ def leaveGameCLI(apiKey) :
 
 # def handleForfait(apikey, playerID) :
     # e
-def handleGame(stdscr, val, nP1, nP2) :
+def handleGame(stdscr, val, nP1, nP2, dictionnaryFunc) :
     curses.curs_set(0)
     stdscr.nodelay(True)
     stdscr.keypad(True)
@@ -88,7 +88,7 @@ def handleGame(stdscr, val, nP1, nP2) :
 
     url_sse = f"http://{adress}:8001/events?apikey={val}&idplayer=0"
     url_post = f"http://{adress}:8001/send-message"
-    url_leave = f"http://{adress}:8001/leave-game?apikey={val}&idplayer=0"
+    url_leave = f"http://{adress}:8001/leave-game?apikey={val}"
     started = False
 
     with requests.get(url_sse, stream=True) as r:
@@ -105,7 +105,8 @@ def handleGame(stdscr, val, nP1, nP2) :
         while True:
             key = stdscr.getch()
             if (key == ord('q')) :
-                return leaveGameCLI(val)
+                requests.get(url_leave)
+                return handleResult(stdscr, val, 0, None, dictionnaryFunc)
             ready, _, _ = select.select([sock], [], [], 0.01)
             if ready:
                 try:
@@ -131,8 +132,8 @@ def handleGame(stdscr, val, nP1, nP2) :
 
             time.sleep(0.01)
 
-def handleResult(stdscr, apikey, playerID, dictionnaryResult) :
-    from files.createMatch import sendLobby
+def handleResult(stdscr, apikey, playerID, dictionnaryResult, dictionnaryFunc, classScreen=Screen()) :
+    # from files.createMatch import sendLobby
     stringResult = """+------------------------------------------------------------------------------------+
 |                                                                                    |
 |                                                                                    |
@@ -159,7 +160,9 @@ def handleResult(stdscr, apikey, playerID, dictionnaryResult) :
 |                                                                                    |
 +------------------------------------------------------------------------------------+"""
     stdscr.addstr(2, 0, stringResult)
-    if (dictionnaryResult[playerID] >= 5) :
+    if (playerID == 0) :
+        stdscr.addstr(11, 41, "Left the game")
+    elif (dictionnaryResult[playerID] >= 5) :
         stdscr.addstr(11, 41, f'Won |-> 5 / {dictionnaryResult[2 - (playerID != 1)]} <-|')
     else :
         stdscr.addstr(11, 41, f'Lost |-> {dictionnaryResult[playerID]} / 5 <-|')
@@ -167,12 +170,12 @@ def handleResult(stdscr, apikey, playerID, dictionnaryResult) :
     while True :
         key = stdscr.getch()
         if key == ord('l') :
-            return sendLobby(stdscr)
+            return handleClassicFuncMove(dictionnaryFunc, "sendGameCreation", "sendLobby", stdscr, classScreen)
         elif key == ord('q') :
             return
 
 
-def handleGame2Players(stdscr, val, playerID) :
+def handleGame2Players(stdscr, val, playerID, dictionnaryFunc) :
     curses.curs_set(0)
     stdscr.nodelay(True)
     stdscr.keypad(True)
@@ -251,12 +254,13 @@ def handleGame2Players(stdscr, val, playerID) :
                     last_update = f"[Erreur SSE] {str(e)}"
 
             time.sleep(0.01)
-        return handleResult(stdscr, val, playerID, dictionnaryResult)
+        return handleResult(stdscr, val, playerID, dictionnaryResult, dictionnaryFunc)
 
 def inputField(stdscr, y, x, prompt, maxL, defaultChar=' '):
     stdscr.addstr(y, x, prompt)
     curses.curs_set(1)
     curses.noecho()
+    stdscr.nodelay(False)
 
     buffer = ""
     while True:

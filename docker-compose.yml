@@ -37,18 +37,48 @@ services:
   #   networks :
   #     - redis_network
 
-  aimodule:
-    build :
-      context : .
-      dockerfile: ./AI-docker/Dockerfile
-    container_name : iaDocker
-    ports:
-      - "8003:8000"
+  # aimodule:
+  #   build :
+  #     context : .
+  #     dockerfile: ./AI-docker/Dockerfile
+  #   container_name : iaDocker
+  #   ports:
+  #     - "8003:8000"
+  #   volumes:
+  #     - ./AI-docker:/app
+  #   networks:
+  #     - redis_network
+
+  db:
+    image: postgres:15
+    restart: always
     volumes:
-      - ./AI-docker:/app
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      POSTGRES_DB: myprojectdb
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+    ports:
+      - "5432:5432"
+
+  infiniteshowdown :
+    build: 
+      context: .
+      dockerfile: ./dockerInfFusion/Dockerfile
+    container_name: infFusion_docker
+    ports:
+      - "8006:8000"
+    volumes:
+      - ./dockerInfFusion:/app
     networks:
       - redis_network
-
+    depends_on:
+      - db
+    environment:
+      - DB_NAME=myprojectdb
+      - DB_USER=myuser
+      - DB_PASSWORD=mypassword
+      - DB_HOST=db
 
   redis:
     image: "redis:latest"
@@ -56,6 +86,9 @@ services:
       - "6380:6379"
     networks:
       - redis_network
+
+volumes:
+  postgres_data:
 
 networks:
   redis_network:

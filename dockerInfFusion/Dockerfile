@@ -9,7 +9,7 @@ WORKDIR /app
 RUN ls -R
 # Installe Django
 
-COPY apiApp/requirements.txt .
+COPY dockerInfFusion/requirements.txt .
 RUN pip install -r requirements.txt
 
 # Initialise un projet Django minimal
@@ -20,6 +20,6 @@ EXPOSE 8000
 # Commande pour lancer Django
 # CMD ["bash"] 
 # CMD ["python",  "manage.py", "runserver"]
-CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "myproject.asgi:application"]
+CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "infiniteshowdown.asgi:application"]
 # CMD ["tail", "-f", "/dev/null"]
 # daphne -b 0.0.0.0 -p 8000 myproject.asgi:application

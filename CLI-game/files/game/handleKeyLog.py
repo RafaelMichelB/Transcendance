@@ -50,33 +50,33 @@ def handleForward(funcName, dictFunctionsAllowed, apiKey, stdscr, classScreen) :
         return
 
 def getApiKeyCLI() :
-    res = requests.get(f"http://{adress}:8001/get-api-key")
+    res = requests.get(f"http://{adress}:8000/get-api-key")
     if (res.status_code == 200) :
         return res.json()["api_key"]
 
 def setApiKeyCLI(apikey) :
-    res = requests.post(f"http://{adress}:8001/set-api-key?apikey={apikey}")
+    res = requests.post(f"http://{adress}:8000/set-api-key", json={"apiKey": apikey})
     if (res.status_code == 200) :
         return res.json()["playable"]
     else :
         return f"Unknown Error : {res.status_code}"
 
 def setApiKeySpCLI(apikey) :
-    res = requests.post(f"http://{adress}:8001/set-api-key-alone?apikey={apikey}")
+    res = requests.post(f"http://{adress}:8000/set-api-key-alone", json={"apiKey": apikey})
     if (res.status_code == 200) :
         return res.json()["playable"]
     else :
         return f"Unknown Error : {res.status_code}"
 
 def loadGamePlayable(apikey) :
-    res = requests.post(f"http://{adress}:8001/is-game-playable?apikey={apikey}")
+    res = requests.post(f"http://{adress}:8000/is-game-playable?apikey={apikey}", json={"apiKey" : apikey})
     if (res.status_code == 200) :
         return res.json()["playable"]
     else :
         return f"Unknown Error : {res.status_code}"
 
 def leaveGameCLI(apiKey) :
-    res=requests.get(f"http://{adress}:8001/leave-game?apikey={apiKey}&idplayer=0")
+    res=requests.get(f"http://{adress}:8000/leave-game?apikey={apiKey}&idplayer=0")
 
 # def handleForfait(apikey, playerID) :
     # e
@@ -86,9 +86,9 @@ def handleGame(stdscr, val, nP1, nP2, dictionnaryFunc) :
     stdscr.keypad(True)
     stdscr.clear()
 
-    url_sse = f"http://{adress}:8001/events?apikey={val}&idplayer=0"
-    url_post = f"http://{adress}:8001/send-message"
-    url_leave = f"http://{adress}:8001/leave-game?apikey={val}"
+    url_sse = f"http://{adress}:8000/events?apikey={val}&idplayer=0"
+    url_post = f"http://{adress}:8000/send-message"
+    url_leave = f"http://{adress}:8000/leave-game?apikey={val}"
     started = False
 
     with requests.get(url_sse, stream=True) as r:
@@ -181,9 +181,9 @@ def handleGame2Players(stdscr, val, playerID, dictionnaryFunc) :
     stdscr.keypad(True)
 
     stdscr.clear()
-    url_sse = f"http://{adress}:8001/events?apikey={val}&idplayer={playerID}"
-    url_post = f"http://{adress}:8001/send-message"
-    # url_leave = f"http://{adress}:8001/leave-game?apikey={val}&idplayer={playerID}"
+    url_sse = f"http://{adress}:8000/events?apikey={val}&idplayer={playerID}"
+    url_post = f"http://{adress}:8000/send-message"
+    # url_leave = f"http://{adress}:8000/leave-game?apikey={val}&idplayer={playerID}"
     started = False
 
     with requests.get(url_sse, stream=True, timeout=5) as r:
@@ -217,7 +217,7 @@ def handleGame2Players(stdscr, val, playerID, dictionnaryFunc) :
                 elif key == ord('q'):
                     stdscr.addstr(4, 0, "[DEBUG] request.get()")
                     stdscr.refresh()
-                    requests.get(f"http://{adress}:8001/forfait-game?apikey={val}&idplayer={playerID}")
+                    requests.get(f"http://{adress}:8000/forfait-game?apikey={val}&idplayer={playerID}")
                     # r.close()
 
             ready, _, _ = select.select([sock], [], [], 0.01)

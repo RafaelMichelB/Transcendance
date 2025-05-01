@@ -1,11 +1,38 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.core.cache import cache
-from django.http import JsonResponse
+from django.http import JsonResponse, StreamingHttpResponse
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
 import sys
+import uuid
+import websockets
+import json
+from channels.layers import get_channel_layer
+from datetime import datetime
+
+channel_layer = get_channel_layer()
+
+uri = "ws://django:8000/ws/game/"
+
+
+class   RequestParsed :
+    def __init__(self, apiKey, action) :
+        if apiKey in apiKeys or apiKey in apiKeysUnplayable :
+            self.apiKey = apiKey
+        else :
+            self.apiKey = None
+        self.action = action
+
 # Create your views here.
 
+dictActivePlayer = {}
+apiKeysUnplayable = []
+dictApi = {}
+dictApiSp = {}
+apiKeys = []
 print("VIEW IMPORTEEE", file=sys.stderr)
+
 def getSimulationState(request):
 
     apikey = request.GET.get('apikey')
@@ -21,3 +48,145 @@ def getSimulationState(request):
         return JsonResponse(data)
     else:
         return JsonResponse({'error': 'Simulation introuvable'}, status=404)
+
+
+async def  checkForUpdates(uriKey, key) :
+    try :
+        async with websockets.connect(uriKey) as ws:
+            while True:
+                # Attendre la réception d'un message depuis le WebSocket
+                message = await ws.recv() #asyncio.wait_for(ws.recv(), timeout=10) #await ws.recv  # Attend le message venant du WebSocket
+                print(f"Ws : {ws}, uriKey : {uriKey} <-> message : {message}", file=sys.stderr)
+                # Formater l'événement SSE (Server-Sent Event)
+                yield f"data: {message}\n\n"
+
+        print("[Debug BACKEND checkForUpdate()] - Websocket Closed", file=sys.stderr)
+#    except asyncio.TimeoutError :       
+    except Exception as e :
+        print(f"[checkForUpdates] WebSocket {ws}  error : {e}", file=sys.stderr)
+        yield f"data: WebSocket stop\n\n"
+
+
+
+async def sse(request):
+    apikey=request.GET.get("apikey")
+    AI = request.GET.get('AI')
+    idplayer = request.GET.get("idplayer")
+    rq = RequestParsed(apikey, {})
+    if (rq.apiKey) :
+        return StreamingHttpResponse(checkForUpdates(f"{uri}?room={rq.apiKey}&userid={idplayer}&AI={AI}", rq.apiKey), content_type="text/event-stream")
+
+@csrf_exempt
+def setApiKeySp(request):
+    apikey = json.loads(request.body).get('apiKey')
+    print(apikey, file=sys.stderr)
+    dictApiSp[apikey] = 1
+    apiKeys.append(apikey)
+    return JsonResponse({"playable": "Game can start"})
+
+
+@csrf_exempt
+def setApiKey(request):
+    apikey = json.loads(request.body).get('apiKey')
+    print(apikey, file=sys.stderr)
+    if apikey not in apiKeysUnplayable:
+        return JsonResponse({"playable" : f"Room {apikey} doesn't Exists"})
+    if apikey in dictApi :
+        dictApi[apikey] += 1
+    else :
+        dictApi[apikey] = 1
+
+    if (dictApi[apikey] > 1) :
+        apiKeysUnplayable.remove(apikey)
+        apiKeys.append(apikey)
+        playable = "Game can start"
+    else :
+        playable = "Need more player"
+
+    return JsonResponse({"playable": playable})
+
+@csrf_exempt
+def isGamePlayable(request) :
+    apikey = json.loads(request.body).get('apiKey')
+    if (dictApi[apikey] > 1) :
+        apiKeys.append(apikey)
+        playable = "Game can start"
+    else :
+        playable = "Need more player"
+    print(f"playable : {playable}", file=sys.stderr)
+    return JsonResponse(content={"playable": playable})
+
+
+def get_api_key(request):
+    api_key = str(uuid.uuid4())
+
+    apiKeysUnplayable.append(api_key)
+
+    return JsonResponse({"api_key": api_key})
+
+@csrf_exempt
+async def sendNewJSON(request):
+    raw_body = await request.body()
+    decoded = raw_body.decode("utf-8")
+
+    dictionnaryJson = json.loads(decoded)
+    # print(f"dictio : {dictionnaryJson}")
+    rq = RequestParsed(dictionnaryJson.get("apiKey", None), dictionnaryJson.get("message", {}))
+    # print(rq.apiKey, file=sys.stderr)
+    if (rq.apiKey) :
+        # print(f"Heyo : {type(rq.action).__name__} | {rq.action}", file=sys.stderr)
+        await channel_layer.group_send(
+            rq.apiKey,
+            {
+                "type": "tempReceived",
+                "text_data": rq.action
+            }
+        )
+    # print(f"Reiceived Json : {dictionnaryJson}", file=sys.stderr)
+
+async def forfaitUser(request) :
+    apikey = request.GET.get("apikey")
+    idplayer = request.GET.get("idplayer")
+    rq = RequestParsed(apikey, {})
+    print("---------------------6>   ->  -> Trying to disconnect ", file=sys.stderr)
+    if (rq.apiKey) :
+        await channel_layer.group_send(
+            rq.apiKey,
+            {
+                "type" : "tempReceived",
+                "text_data" : f'{{"action" : "forfait", "player" : {idplayer}}}'
+            }
+        )
+        try :
+            dictApi.pop(apikey)
+        except KeyError :
+            try :
+                dictApiSp.pop(apikey)
+            except KeyError :
+                return
+        try :
+            apiKeys.remove(apikey)
+        except Exception :
+            apiKeysUnplayable.remove(apikey)
+
+async def disconnectUsr(request) :
+    apikey = request.GET.get("apikey")
+    print("disco usr", file=sys.stderr)
+    await channel_layer.group_send(
+        apikey,
+        {
+            "type" : "tempReceived",
+            "text_data" : '{"action" : "disconnect"}'
+        }
+    )
+    try :
+        dictApi.pop(apikey)
+    except KeyError :
+        try :
+            dictApiSp.pop(apikey)
+        except KeyError :
+            return
+    try :
+        apiKeys.remove(apikey)
+    except Exception :
+        apiKeysUnplayable.remove(apikey)

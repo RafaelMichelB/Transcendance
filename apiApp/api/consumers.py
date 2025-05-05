@@ -42,6 +42,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 			return
 
 		cache.set(f'simulation_state_{self.room_group_name}', {"State" : "Waiting for start"}, timeout=None)
+		print("6", file=sys.stderr)
 		self.game_running = False
 		self.task = None
 		self.map = Map() #None
@@ -54,7 +55,13 @@ class GameConsumer(AsyncWebsocketConsumer):
 		)
 
 		await self.accept()
-		# print("Connected", file=sys.stderr)
+		print("Connected", file=sys.stderr)
+
+		game_stats = cache.get(f'simulation_state_{self.room_group_name}')
+
+		await self.send(text_data=json.dumps({
+			'game_stats': game_stats
+		}))
 
 	async def disconnect(self, close_code):
 		await self.channel_layer.group_discard(

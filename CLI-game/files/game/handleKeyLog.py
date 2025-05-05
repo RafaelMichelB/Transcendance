@@ -181,7 +181,7 @@ def handleGame2Players(stdscr, val, playerID, dictionnaryFunc) :
     stdscr.keypad(True)
 
     stdscr.clear()
-    url_sse = f"http://{adress}:8000/events?apikey={val}&idplayer={playerID}"
+    url_sse = f"http://{adress}:8000/events?apikey={val}&idplayer={playerID}&ai=0"
     url_post = f"http://{adress}:8000/send-message"
     # url_leave = f"http://{adress}:8000/leave-game?apikey={val}&idplayer={playerID}"
     started = False
@@ -195,7 +195,7 @@ def handleGame2Players(stdscr, val, playerID, dictionnaryFunc) :
         last_update = ""
         scoresString = f"{1} : 0                 ||                 {2} : 0\n"
         stdscr.addstr(0, 0, f"{1}, press ↑ ↓ to move / {2}, press w s to move, p to start, q to quit.")
-
+        stdscr.refresh()
         while True:
             key = stdscr.getch()
             if key != -1:

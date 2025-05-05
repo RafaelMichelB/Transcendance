@@ -55,6 +55,7 @@ async def  checkForUpdates(uriKey, key) :
         async with websockets.connect(uriKey) as ws:
             while True:
                 # Attendre la réception d'un message depuis le WebSocket
+                print(f"Ws : {ws}, uriKey : {uriKey}", file=sys.stderr)
                 message = await ws.recv() #asyncio.wait_for(ws.recv(), timeout=10) #await ws.recv  # Attend le message venant du WebSocket
                 print(f"Ws : {ws}, uriKey : {uriKey} <-> message : {message}", file=sys.stderr)
                 # Formater l'événement SSE (Server-Sent Event)
@@ -69,11 +70,16 @@ async def  checkForUpdates(uriKey, key) :
 
 
 async def sse(request):
+    print("1", file=sys.stderr)
     apikey=request.GET.get("apikey")
-    AI = request.GET.get('AI')
+    print("2", file=sys.stderr)
+    AI = request.GET.get('ai')
+    print("3", file=sys.stderr)
     idplayer = request.GET.get("idplayer")
+    print("4", file=sys.stderr)
     rq = RequestParsed(apikey, {})
     if (rq.apiKey) :
+        print("5", file=sys.stderr)
         return StreamingHttpResponse(checkForUpdates(f"{uri}?room={rq.apiKey}&userid={idplayer}&AI={AI}", rq.apiKey), content_type="text/event-stream")
 
 @csrf_exempt
@@ -114,7 +120,7 @@ def isGamePlayable(request) :
     else :
         playable = "Need more player"
     print(f"playable : {playable}", file=sys.stderr)
-    return JsonResponse(content={"playable": playable})
+    return JsonResponse({"playable": playable})
 
 
 def get_api_key(request):
@@ -126,10 +132,7 @@ def get_api_key(request):
 
 @csrf_exempt
 async def sendNewJSON(request):
-    raw_body = await request.body()
-    decoded = raw_body.decode("utf-8")
-
-    dictionnaryJson = json.loads(decoded)
+    dictionnaryJson = json.loads(request.body)
     # print(f"dictio : {dictionnaryJson}")
     rq = RequestParsed(dictionnaryJson.get("apiKey", None), dictionnaryJson.get("message", {}))
     # print(rq.apiKey, file=sys.stderr)
@@ -190,3 +193,6 @@ async def disconnectUsr(request) :
         apiKeys.remove(apikey)
     except Exception :
         apiKeysUnplayable.remove(apikey)
+
+
+

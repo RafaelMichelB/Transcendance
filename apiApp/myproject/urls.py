@@ -4,7 +4,7 @@ from api.views import getSimulationState, sse, setApiKeySp, get_api_key, sendNew
 
 
 urlpatterns = [
-    path('api/simulation/', getSimulationState, name='getSimulationState'),
+    path('api/simulation', getSimulationState, name='getSimulationState'),
     path('set-api-key-alone', setApiKeySp, name="setApiKeySp"),
     path('set-api-key', setApiKey, name="setApiKey"),
     path('get-api-key', get_api_key, name="get_api_key"),

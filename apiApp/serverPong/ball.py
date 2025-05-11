@@ -198,12 +198,16 @@ class	Movement() :
 			valueIntersectionsWinning = calcIntersections(self.map.winningTeam1[0], self.map.winningTeam1[1], self.ball.pos, pointTrajectory)								# Determine if 1st player won a round   
 			if valueIntersectionsWinning[1] != None :																														# If ball trajectory go through winning zone 
 				await self.setWinPlayer(1)																																	# Make 1st player win a point
+				dictInfoRackets[self.roomName]["scoring"] = True
 				await asyncio.sleep(3)																																		# Sleeping to let players react
+				dictInfoRackets[self.roomName]["scoring"] = False
 			else :
 				valueIntersectionsWinning = calcIntersections(self.map.winningTeam2[0], self.map.winningTeam2[1], self.ball.pos, pointTrajectory)							# Determine if 2nd player won a round
 				if valueIntersectionsWinning[1] != None :																													# If ball trajectory go through winning zone
 					await self.setWinPlayer(2)																																# Make 2nd player win a point
+					dictInfoRackets[self.roomName]["scoring"] = True
 					await asyncio.sleep(3)																																	# Sleeping to let players react
+					dictInfoRackets[self.roomName]["scoring"] = False
 				else :
 					self.ball.pos = pointTrajectory																															# No collision + No winning round --> Keep same vector and update value
 			return (0.0)																																					# No more time to calc on this iteration
@@ -226,7 +230,7 @@ class	Movement() :
 
 	async def setRedisCache(self, roomName) :
 		stats = await self.toDictionnary()
-		print(f"Stats redisCache : {stats}",  file=sys.stderr)
+		# print(f"Stats redisCache : {stats}",  file=sys.stderr)
 		cache.set(f'simulation_state_{roomName}', stats, timeout=None)
 
 

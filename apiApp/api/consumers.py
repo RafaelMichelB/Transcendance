@@ -11,17 +11,24 @@ import asyncio
 from urllib.parse import parse_qs
 import sys
 import random
+import requests
 import redis
 
+urlAI = "http://aimodule:8000/"
 def calcAllIntersections(walls, ptRacket1, ptRacket2) :
 	for w in walls:
 		# print(f"Actual wall : {w}", file=sys.stderr)	
 		# print(f"wall : {w}\nptRacket: {ptRacket1} | {ptRacket2}\nResult calc intersections : {calcIntersections(w[0], w[1], ptRacket1, ptRacket2)}", file=sys.stderr)
 		if (calcIntersections(w[0], w[1], ptRacket1, ptRacket2) != (None, None)) :
-			print("Yep true", file=sys.stderr)
+			# print("Yep true", file=sys.stderr)
 			return True
 	return False
 
+async def launchAiGame(url) :
+	asyncio.sleep(0.5)
+	print("ai game", file=sys.stderr)
+	requests.get(url)
+	print("ai game2", file=sys.stderr)
 
 class GameConsumer(AsyncWebsocketConsumer):
 	async def connect(self):
@@ -45,8 +52,9 @@ class GameConsumer(AsyncWebsocketConsumer):
 		print("6", file=sys.stderr)
 		self.game_running = False
 		self.task = None
+		# self.scoring = False
 		self.map = Map() #None
-		dictInfoRackets[self.room_group_name] = {"racket1" : [[0, 300], [0,395]], "racket2" : [[1000, 300], [1000, 395]]}
+		dictInfoRackets[self.room_group_name] = {"scoring" : False, "racket1" : [[0, 300], [0,395]], "racket2" : [[1000, 300], [1000, 395]]}
 		# print(dictInfoRackets, file=sys.stderr)
 
 		await self.channel_layer.group_add(
@@ -106,7 +114,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 			self.game_running = False
 			if self.task:
 				self.task.cancel()
-		elif action == "move":
+		elif action == "move" and not dictInfoRackets[self.room_group_name]["scoring"]:
 			try :
 				player1Move:str = data.get("player1", "None")
 				player2Move:str = data.get("player2", "None")
@@ -173,12 +181,14 @@ class GameConsumer(AsyncWebsocketConsumer):
 				print("Yes !!!", file=sys.stderr)
 				self.gameSimulation = Movement(BallData(), self.room_group_name, map=self.map, plnb=2, usrID=self.usrID) # Change informations if game module
 				self.t2 = asyncio.create_task(self.run_simulation())
+				if self.AI :
+					asyncio.create_task(launchAiGame(f"{urlAI}init-ai?apikey={self.room_group_name}"))
 
 				while self.game_running:
 					await asyncio.sleep(0.2)
 					try:
 						stats = cache.get(f"simulation_state_{self.room_group_name}")
-						print(f"statissssss : {stats}", file=sys.stderr)
+						# print(f"statissssss : {stats}", file=sys.stderr)
 						if (stats.get("team1Score", 0) >= 5 or stats.get("team2Score", 0) >= 5) and self.usrID == 1:
 							print("Yaaaaay stoping game", file=sys.stderr)
 							await self.channel_layer.group_send(
@@ -197,10 +207,10 @@ class GameConsumer(AsyncWebsocketConsumer):
 							await self.gameSimulation.setRedisCache(self.room_group_name)
 						r = redis.Redis(host='redis', port=6379, db=0)
 						cles_redis = r.keys('*')
-						print([clé.decode('utf-8') for clé in cles_redis], file=sys.stderr)
+						# print([clé.decode('utf-8') for clé in cles_redis], file=sys.stderr)
 						stats = cache.get(f'simulation_state_{self.room_group_name}')
-						print(f"caches: {str(cache)}", file=sys.stderr)
-						print(f"usrID : {self.usrID}\nstats: {stats}", file=sys.stderr)
+						# print(f"caches: {str(cache)}", file=sys.stderr)
+						# print(f"usrID : {self.usrID}\nstats: {stats}", file=sys.stderr)
 						await self.channel_layer.group_send(
 							self.room_group_name,
 							{

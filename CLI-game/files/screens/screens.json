@@ -19,9 +19,9 @@
         "inputPos" : [17, 5],
         "outputPos" : [17, 56]
     },
-    "Result" : {
-        "fileID" : "./Result.sc",
-        "inpuPos" : [],
+    "AiGame" : {
+        "fileID" : "./AiGame.sc",
+        "inputPos" : [18, 21],
         "outputPos" :[]
     }
 }

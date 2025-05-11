@@ -175,13 +175,13 @@ def handleResult(stdscr, apikey, playerID, dictionnaryResult, dictionnaryFunc, c
             return
 
 
-def handleGame2Players(stdscr, val, playerID, dictionnaryFunc) :
+def handleGame2Players(stdscr, val, playerID, isAiGame, dictionnaryFunc, name="Default") :
     curses.curs_set(0)
     stdscr.nodelay(True)
     stdscr.keypad(True)
 
     stdscr.clear()
-    url_sse = f"http://{adress}:8000/events?apikey={val}&idplayer={playerID}&ai=0"
+    url_sse = f"http://{adress}:8000/events?apikey={val}&idplayer={playerID}&ai={isAiGame}"
     url_post = f"http://{adress}:8000/send-message"
     # url_leave = f"http://{adress}:8000/leave-game?apikey={val}&idplayer={playerID}"
     started = False
@@ -194,7 +194,7 @@ def handleGame2Players(stdscr, val, playerID, dictionnaryFunc) :
         buffer = ""
         last_update = ""
         scoresString = f"{1} : 0                 ||                 {2} : 0\n"
-        stdscr.addstr(0, 0, f"{1}, press ↑ ↓ to move / {2}, press w s to move, p to start, q to quit.")
+        stdscr.addstr(0, 0, f"{name}, press ↑ ↓ to move, p to (P1 only) start, q to quit.")
         stdscr.refresh()
         while True:
             key = stdscr.getch()

@@ -21,7 +21,7 @@ def sendGameCreation(stdscr, classScreen, dictFunctionsAllowed, apiKey=None) :
         stdscr.refresh()
         if (isGamePlayable == "Game can start") :
             time.sleep(0.5)
-            return handleGame2Players(stdscr, apiKey, 1, dictFunctionsAllowed)
+            return handleGame2Players(stdscr, apiKey, 1, 0, dictFunctionsAllowed)
         stdscr.nodelay(True)
         key = stdscr.getch()
         if (key == 260) :
@@ -61,8 +61,17 @@ def sendGameJoining(stdscr, classScreen, dictFunctionsAllowed, apiKey=None) :
         if (isGamePlayable == "Game can start") :
             time.sleep(0.5)
             addFunc('sendGameJoining')
-            return handleGame2Players(stdscr, inputGameID, 2, dictFunctionsAllowed)
+            return handleGame2Players(stdscr, inputGameID, 2, 0, dictFunctionsAllowed)
         time.sleep(0.3)
+
+def sendAiGame(stdscr, classScreen, dictFunctionsAllowed, apiKey=None) :
+    infoGameAI = classScreen.getSpecificInfo('AiGame')
+    stdscr.addstr(2, 0, loadInfo(infoGameAI))
+    stdscr.refresh()
+    name = inputField(stdscr, 1 + infoGameAI["inputPos"][0], infoGameAI["inputPos"][1], "Your name: ", 10)
+    key = getApiKeyCLI()
+    setApiKeySpCLI(key)
+    handleGame2Players(stdscr, key, 1, 1, dictFunctionsAllowed, name)
 
 def sendLocalGame(stdscr, classScreen, dictFunctionsAllowed, apiKey=None) :
     infoSinglePlayer = classScreen.getSpecificInfo("SinglePlayer")
@@ -101,12 +110,15 @@ def sendLobby(stdscr, classScreen=Screen(), dictFunctionsAllowed=None, apiKey=No
                 pass
             elif key == ord('5') :
                 return handleClassicFuncMove(dictFunctionsAllowed, "sendLobby", "sendLocalGame", stdscr, classScreen)
+            if key == ord('6') :
+                return handleClassicFuncMove(dictFunctionsAllowed, "sendLobby", "sendAiGame", stdscr, classScreen)
 
 dictFunctionsAllowed = {
         "sendLobby" : sendLobby,
         "sendLocalGame" : sendLocalGame,
         "sendGameJoining" : sendGameJoining,
-        "sendGameCreation" : sendGameCreation
+        "sendGameCreation" : sendGameCreation,
+        "sendAiGame" : sendAiGame
 }
 
 def main(stdscr):

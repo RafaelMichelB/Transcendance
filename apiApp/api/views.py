@@ -15,6 +15,8 @@ channel_layer = get_channel_layer()
 
 uri = "ws://django:8000/ws/game/"
 
+class HttpResponseNoContent(HttpResponse):
+    status_code = HTTPStatus.NO_CONTENT
 
 class   RequestParsed :
     def __init__(self, apiKey, action) :
@@ -34,7 +36,7 @@ apiKeys = []
 print("VIEW IMPORTEEE", file=sys.stderr)
 
 def getSimulationState(request):
-
+    print(f"[DEBUG] En attente de l'apiKey", file=sys.stderr)
     apikey = request.GET.get('apikey')
     print(f"[DEBUG] API Key reçue : {apikey}", file=sys.stderr)
     
@@ -145,6 +147,7 @@ async def sendNewJSON(request):
                 "text_data": rq.action
             }
         )
+    return HttpResponse(status=204)
     # print(f"Reiceived Json : {dictionnaryJson}", file=sys.stderr)
 
 async def forfaitUser(request) :
@@ -171,6 +174,7 @@ async def forfaitUser(request) :
             apiKeys.remove(apikey)
         except Exception :
             apiKeysUnplayable.remove(apikey)
+    return HttpResponseNoContent()
 
 async def disconnectUsr(request) :
     apikey = request.GET.get("apikey")
@@ -193,6 +197,7 @@ async def disconnectUsr(request) :
         apiKeys.remove(apikey)
     except Exception :
         apiKeysUnplayable.remove(apikey)
+    return HttpResponseNoContent()
 
 
 

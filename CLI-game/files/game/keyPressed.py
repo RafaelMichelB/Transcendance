@@ -22,7 +22,7 @@ def on_release(key):
 async def is_pressed(url_post, val):
     started = False
     while not stop_event.is_set():
-        # print(handler)
+        # #print(handler)
         if pressed_keys:
             names = []
             for k in pressed_keys:

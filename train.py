@@ -20,7 +20,7 @@ def calcIntersections(A1, A2, B1, B2) :
     timePercent = (originDiffX * dYWall - originDiffY * dXWall) / determinant
     wallPercent = (originDiffX * dYSpeed - originDiffY * dXSpeed) / determinant
 
-    print(f"timePercent={timePercent}\nwallPercent={wallPercent}")
+    #print(f"timePercent={timePercent}\nwallPercent={wallPercent}")
 
     if ( 0 <= timePercent <= 1 and 0 <= wallPercent <= 1 ) :
         return (timePercent, wallPercent)

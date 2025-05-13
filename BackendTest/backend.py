@@ -49,14 +49,14 @@ async def  checkForUpdates(uriKey, key) :
             while True:
                 # Attendre la réception d'un message depuis le WebSocket
                 message = await ws.recv() #asyncio.wait_for(ws.recv(), timeout=10) #await ws.recv  # Attend le message venant du WebSocket
-                print(f"Ws : {ws}, uriKey : {uriKey} <-> message : {message}", file=sys.stderr)
+                #print(f"Ws : {ws}, uriKey : {uriKey} <-> message : {message}", file=sys.stderr)
                 # Formater l'événement SSE (Server-Sent Event)
                 yield f"data: {message}\n\n"
 
-        print("[Debug BACKEND checkForUpdate()] - Websocket Closed", file=sys.stderr)
+        #print("[Debug BACKEND checkForUpdate()] - Websocket Closed", file=sys.stderr)
 #    except asyncio.TimeoutError :       
     except Exception as e :
-        print(f"[checkForUpdates] WebSocket {ws}  error : {e}", file=sys.stderr)
+        #print(f"[checkForUpdates] WebSocket {ws}  error : {e}", file=sys.stderr)
         yield f"data: WebSocket stop\n\n"
 
 
@@ -69,14 +69,14 @@ async def sse(request: Request, apikey: str = None, AI=False, idplayer=None):
 
 @app.post("/set-api-key-alone")
 def setApiKeySp(request: Request, apikey:str=None):
-    print(apikey, file=sys.stderr)
+    #print(apikey, file=sys.stderr)
     dictApiSp[apikey] = 1
     apiKeys.append(apikey)
     return JSONResponse(content={"playable": "Game can start"})
 
 @app.post("/set-api-key")
 def setApiKey(request: Request, apikey:str=None):
-    print(apikey, file=sys.stderr)
+    #print(apikey, file=sys.stderr)
     if apikey not in apiKeysUnplayable:
         return JSONResponse(content={"playable" : f"Room {apikey} doesn't Exists"})
     if apikey in dictApi :
@@ -108,7 +108,7 @@ def isGamePlayable(request: Request, apikey=None) :
         playable = "Game can start"
     else :
         playable = "Need more player"
-    print(f"playable : {playable}", file=sys.stderr)
+    #print(f"playable : {playable}", file=sys.stderr)
     return JSONResponse(content={"playable": playable})
 
 
@@ -118,11 +118,11 @@ async def sendNewJSON(request: Request):
     decoded = raw_body.decode("utf-8")
 
     dictionnaryJson = json.loads(decoded)
-    # print(f"dictio : {dictionnaryJson}")
+    # #print(f"dictio : {dictionnaryJson}")
     rq = RequestParsed(dictionnaryJson.get("apiKey", None), dictionnaryJson.get("message", {}))
-    # print(rq.apiKey, file=sys.stderr)
+    # #print(rq.apiKey, file=sys.stderr)
     if (rq.apiKey) :
-        # print(f"Heyo : {type(rq.action).__name__} | {rq.action}", file=sys.stderr)
+        # #print(f"Heyo : {type(rq.action).__name__} | {rq.action}", file=sys.stderr)
         await channel_layer.group_send(
             rq.apiKey,
             {
@@ -130,12 +130,12 @@ async def sendNewJSON(request: Request):
                 "text_data": rq.action
             }
         )
-    # print(f"Reiceived Json : {dictionnaryJson}", file=sys.stderr)
+    # #print(f"Reiceived Json : {dictionnaryJson}", file=sys.stderr)
 
 @app.get("/forfait-game")
 async def forfaitUser(request:Request, apikey, idplayer) :
     rq = RequestParsed(apikey, {})
-    print("---------------------6>   ->  -> Trying to disconnect ", file=sys.stderr)
+    #print("---------------------6>   ->  -> Trying to disconnect ", file=sys.stderr)
     if (rq.apiKey) :
         await channel_layer.group_send(
             rq.apiKey,
@@ -158,7 +158,7 @@ async def forfaitUser(request:Request, apikey, idplayer) :
 
 @app.get("/leave-game")
 async def disconnectUsr(request:Request, apikey) :
-    print("disco usr", file=sys.stderr)
+    #print("disco usr", file=sys.stderr)
     await channel_layer.group_send(
         apikey,
         {
@@ -183,13 +183,13 @@ async def disconnectUsr(request:Request, apikey) :
 urlRequests = "http://django:8000/"
 @app.get("/actual-state")
 def getActualPosition(request:Request, apikey) :
-    print(f"{urlRequests}api/simulation/?apikey={apikey}", file=sys.stderr)
+    #print(f"{urlRequests}api/simulation/?apikey={apikey}", file=sys.stderr)
     res = requests.get(f"{urlRequests}api/simulation/?apikey={apikey}")
     if res.status_code != 200 :
-        print(f"Error code: {res.status_code}\nData : ", file=sys.stderr)
+        #print(f"Error code: {res.status_code}\nData : ", file=sys.stderr)
         return
     else :
-        print(f"Data :\n{res.json()}", file=sys.stderr )
+        #print(f"Data :\n{res.json()}", file=sys.stderr )
         return res.json()
 #async def stopGameForfait(
 

@@ -10,6 +10,7 @@ import websockets
 import json
 from channels.layers import get_channel_layer
 from datetime import datetime
+from http import HTTPStatus
 
 channel_layer = get_channel_layer()
 
@@ -33,61 +34,48 @@ apiKeysUnplayable = []
 dictApi = {}
 dictApiSp = {}
 apiKeys = []
-print("VIEW IMPORTEEE", file=sys.stderr)
+#print("VIEW IMPORTEEE", file=sys.stderr)
 
 def getSimulationState(request):
-    print(f"[DEBUG] En attente de l'apiKey", file=sys.stderr)
+    #print(f"[DEBUG] En attente de l'apiKey", file=sys.stderr)
     apikey = request.GET.get('apikey')
-    print(f"[DEBUG] API Key reçue : {apikey}", file=sys.stderr)
+    #print(f"[DEBUG] API Key reçue : {apikey}", file=sys.stderr)
     
     if not apikey:
         return JsonResponse({'error': 'API key manquante'}, status=400)
     
     data = cache.get(f'simulation_state_{apikey}')
-    print(f"[DEBUG] Données récupérées du cache : {data}", file=sys.stderr)
+    #print(f"[DEBUG] Données récupérées du cache : {data}", file=sys.stderr)
     
     if data:
         return JsonResponse(data)
     else:
-        return JsonResponse({'error': 'Simulation introuvable'}, status=404)
+        return JsonResponse({'error': 'Simulation not found'}, status=404)
 
 
 async def  checkForUpdates(uriKey, key) :
     try :
         async with websockets.connect(uriKey) as ws:
             while True:
-                # Attendre la réception d'un message depuis le WebSocket
-                print(f"Ws : {ws}, uriKey : {uriKey}", file=sys.stderr)
-                message = await ws.recv() #asyncio.wait_for(ws.recv(), timeout=10) #await ws.recv  # Attend le message venant du WebSocket
-                print(f"Ws : {ws}, uriKey : {uriKey} <-> message : {message}", file=sys.stderr)
-                # Formater l'événement SSE (Server-Sent Event)
+                message = await ws.recv()
                 yield f"data: {message}\n\n"
-
-        print("[Debug BACKEND checkForUpdate()] - Websocket Closed", file=sys.stderr)
-#    except asyncio.TimeoutError :       
     except Exception as e :
-        print(f"[checkForUpdates] WebSocket {ws}  error : {e}", file=sys.stderr)
         yield f"data: WebSocket stop\n\n"
 
 
 
 async def sse(request):
-    print("1", file=sys.stderr)
     apikey=request.GET.get("apikey")
-    print("2", file=sys.stderr)
     AI = request.GET.get('ai')
-    print("3", file=sys.stderr)
     idplayer = request.GET.get("idplayer")
-    print("4", file=sys.stderr)
     rq = RequestParsed(apikey, {})
     if (rq.apiKey) :
-        print("5", file=sys.stderr)
+        print(f"{uri}?room={rq.apiKey}&userid={idplayer}&AI={AI}", file=sys.stderr)
         return StreamingHttpResponse(checkForUpdates(f"{uri}?room={rq.apiKey}&userid={idplayer}&AI={AI}", rq.apiKey), content_type="text/event-stream")
 
 @csrf_exempt
 def setApiKeySp(request):
     apikey = json.loads(request.body).get('apiKey')
-    print(apikey, file=sys.stderr)
     dictApiSp[apikey] = 1
     apiKeys.append(apikey)
     return JsonResponse({"playable": "Game can start"})
@@ -96,7 +84,6 @@ def setApiKeySp(request):
 @csrf_exempt
 def setApiKey(request):
     apikey = json.loads(request.body).get('apiKey')
-    print(apikey, file=sys.stderr)
     if apikey not in apiKeysUnplayable:
         return JsonResponse({"playable" : f"Room {apikey} doesn't Exists"})
     if apikey in dictApi :
@@ -121,7 +108,7 @@ def isGamePlayable(request) :
         playable = "Game can start"
     else :
         playable = "Need more player"
-    print(f"playable : {playable}", file=sys.stderr)
+    #print(f"playable : {playable}", file=sys.stderr)
     return JsonResponse({"playable": playable})
 
 
@@ -135,11 +122,11 @@ def get_api_key(request):
 @csrf_exempt
 async def sendNewJSON(request):
     dictionnaryJson = json.loads(request.body)
-    # print(f"dictio : {dictionnaryJson}")
+    # #print(f"dictio : {dictionnaryJson}")
     rq = RequestParsed(dictionnaryJson.get("apiKey", None), dictionnaryJson.get("message", {}))
-    # print(rq.apiKey, file=sys.stderr)
+    # #print(rq.apiKey, file=sys.stderr)
     if (rq.apiKey) :
-        # print(f"Heyo : {type(rq.action).__name__} | {rq.action}", file=sys.stderr)
+        # #print(f"Heyo : {type(rq.action).__name__} | {rq.action}", file=sys.stderr)
         await channel_layer.group_send(
             rq.apiKey,
             {
@@ -148,13 +135,13 @@ async def sendNewJSON(request):
             }
         )
     return HttpResponse(status=204)
-    # print(f"Reiceived Json : {dictionnaryJson}", file=sys.stderr)
+    # #print(f"Reiceived Json : {dictionnaryJson}", file=sys.stderr)
 
 async def forfaitUser(request) :
     apikey = request.GET.get("apikey")
     idplayer = request.GET.get("idplayer")
     rq = RequestParsed(apikey, {})
-    print("---------------------6>   ->  -> Trying to disconnect ", file=sys.stderr)
+    #print("---------------------6>   ->  -> Trying to disconnect ", file=sys.stderr)
     if (rq.apiKey) :
         await channel_layer.group_send(
             rq.apiKey,
@@ -178,7 +165,7 @@ async def forfaitUser(request) :
 
 async def disconnectUsr(request) :
     apikey = request.GET.get("apikey")
-    print("disco usr", file=sys.stderr)
+    #print("disco usr", file=sys.stderr)
     await channel_layer.group_send(
         apikey,
         {

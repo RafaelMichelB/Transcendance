@@ -244,7 +244,7 @@ def getAsciiTerrain(map:Map, rcktDict, relation=30) :
 
     lstFinal = [[0 for i in range(oneCharEquivalentX + 1)] for j in range(oneCharEquivalentY + 1)]
     myWallsBordered = [[[round(i.x / relation), round(i.y / relation)] for i in k] for k in map.walls] + [[[round(valuepl1[0][0] / relation), round(valuepl1[0][1] / relation)], [round(valuepl1[1][0] / relation), round(valuepl1[1][1] / relation)]], [[round(valuepl2[0][0] / relation), round(valuepl2[0][1] / relation)], [round(valuepl2[1][0] / relation), round(valuepl2[1][1] / relation)]]]
-    #print(myWallsBordered)
+    ##print(myWallsBordered)
     for wall in myWallsBordered :
         listWall = calcYsement(wall[0], wall[1])
         for elem in listWall : 
@@ -297,7 +297,7 @@ def mainPrinter(racketDictionnary, stdscr, key=None, map=Map()) :
 # mainPrinter(
 # ls = getAsciiTerrain(Map(), racketDictionnary)
 
-# print(printState(ls, [600, 225]))
+# #print(printState(ls, [600, 225]))
 
 
     

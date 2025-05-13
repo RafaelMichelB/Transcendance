@@ -2,7 +2,9 @@
 FROM python:3.11
 
 # Définit le répertoire de travail dans le conteneur
-RUN apt-get update && apt-get install -y curl
+RUN apt-get update && apt-get install -y curl \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 

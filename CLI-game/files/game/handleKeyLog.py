@@ -32,7 +32,7 @@ def handleClassicFuncMove(dictionnary, oldFuncName, newFuncName, stdscr, classSc
 
 def handleBackward(funcName, dictFunctionsAllowed, apiKey, stdscr, classScreen):
     # if (apiKey != None) :
-    #     print("Yike")
+    #     #print("Yike")
     #     leaveGameCLI(apiKey)
     lstFuncFront.append(funcName)
     args = (stdscr, classScreen, dictFunctionsAllowed)
@@ -133,7 +133,6 @@ def handleGame(stdscr, val, nP1, nP2, dictionnaryFunc) :
             time.sleep(0.01)
 
 def handleResult(stdscr, apikey, playerID, dictionnaryResult, dictionnaryFunc, classScreen=Screen()) :
-    # from files.createMatch import sendLobby
     stringResult = """+------------------------------------------------------------------------------------+
 |                                                                                    |
 |                                                                                    |
@@ -183,7 +182,6 @@ def handleGame2Players(stdscr, val, playerID, isAiGame, dictionnaryFunc, name="D
     stdscr.clear()
     url_sse = f"http://{adress}:8000/events?apikey={val}&idplayer={playerID}&ai={isAiGame}"
     url_post = f"http://{adress}:8000/send-message"
-    # url_leave = f"http://{adress}:8000/leave-game?apikey={val}&idplayer={playerID}"
     started = False
 
     with requests.get(url_sse, stream=True, timeout=5) as r:
@@ -235,11 +233,6 @@ def handleGame2Players(stdscr, val, playerID, isAiGame, dictionnaryFunc, name="D
                                 # stopped = True
                                 dictionnaryResult = {1 : dico['game_stats']['team1Score'], 2 : dico["game_stats"]["team2Score"]}
                                 break
-                                # stdscr.addstr(3, 0, "[ DEBUG ] HANDLERESULT ")
-                                # stdscr.refresh()
-                                # return handleResult(stdscr, val, playerID, dictionnaryResult)
-                                # break
-
                             if not stopped :
                                 last_update = mainPrinter(dico, stdscr)
                                 scoresString = f"{1} : {dico['game_stats']['team1Score']}                 ||                 {2} : {dico['game_stats']['team2Score']}\n"

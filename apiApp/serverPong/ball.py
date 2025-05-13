@@ -21,7 +21,7 @@ def determineRandomStart() :
 
 	new_vx = magnitude * math.cos(angle)
 	new_vy = magnitude * math.sin(angle)
-	# print("=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=> AddedSpd: ", addedSpd, file=sys.stderr)
+	# #print("=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=> AddedSpd: ", addedSpd, file=sys.stderr)
 
 	return Vector(new_vx, new_vy)
 
@@ -78,7 +78,7 @@ def add_random_angle(vx, vy, addedSpd):
 
 	new_vx = magnitude * math.cos(angle)
 	new_vy = magnitude * math.sin(angle)
-	# print("=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=> AddedSpd: ", addedSpd, file=sys.stderr)
+	# #print("=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=> AddedSpd: ", addedSpd, file=sys.stderr)
 
 	return Vector(new_vx, new_vy, spdMultiplier=addedSpd)
 
@@ -89,19 +89,19 @@ def addSpeed(ori : int, incidentVector : Vector) :
 		m = -1
 	angle = math.atan2(90 * m, ori)
 	magnitude = math.hypot(90 * m, ori) + 30 * incidentVector.addedSpeed
-	# print("------------------------------->>> magnitude :", magnitude, file=sys.stderr)
+	# #print("------------------------------->>> magnitude :", magnitude, file=sys.stderr)
 	return Vector(magnitude * math.sin(angle), magnitude * math.cos(angle), spdMultiplier=incidentVector.addedSpeed+1)
 
 
 
 def calcBouncePlayer(wallHit, hitPoint : Point, vectorMovement : Vector) -> Vector :
-	# print(f"position : {hitPoint}\nwallHit: {wallHit}", file=sys.stderr)
+	# #print(f"position : {hitPoint}\nwallHit: {wallHit}", file=sys.stderr)
 	vecAB = Vector(wallHit[0], wallHit[1])
 	vecAM = Vector(wallHit[0], hitPoint)
-	# print("=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=> AddedSpd: ", vectorMovement.addedSpeed, file=sys.stderr)
+	# #print("=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=>=> AddedSpd: ", vectorMovement.addedSpeed, file=sys.stderr)
 
 	ratio = vecAM.norm / vecAB.norm 
-	# print(f"ratio : {ratio}", file=sys.stderr)
+	# #print(f"ratio : {ratio}", file=sys.stderr)
 	if (ratio < 0.125) : 
 		return addSpeed(-90, vectorMovement)
 	elif (ratio < 0.250) :
@@ -133,14 +133,14 @@ class	BallData() :
 	def calculateReflexionVector(self, wallHit, racketList : list) -> Vector :
 		wallHitVector = Vector(wallHit[0], wallHit[1])
 		normalVector = normalizeNormalVector(wallHitVector)
-		# print("Wall Hit : ", wallHitVector, file=sys.stderr)
-		# print(f"racketList : {racketList}", file=sys.stderr)
-		# print(" Normal Vector : ", normalVector, file=sys.stderr)
+		# #print("Wall Hit : ", wallHitVector, file=sys.stderr)
+		# #print(f"racketList : {racketList}", file=sys.stderr)
+		# #print(" Normal Vector : ", normalVector, file=sys.stderr)
 		if (wallHit in racketList) :
 			vReturn = calcBouncePlayer(wallHit, self.pos, self.spd)
 		else :
 			vReturn = add_random_angle(self.spd.x - 2 * calcDotProduct(self.spd, normalVector) * normalVector.x, self.spd.y - 2 * calcDotProduct(self.spd, normalVector) * normalVector.y, self.spd.addedSpeed)
-		# print("Vector to return -->> : ", vReturn, file=sys.stderr)
+		# #print("Vector to return -->> : ", vReturn, file=sys.stderr)
 		return vReturn
 		
 
@@ -230,14 +230,14 @@ class	Movement() :
 
 	async def setRedisCache(self, roomName) :
 		stats = await self.toDictionnary()
-		# print(f"Stats redisCache : {stats}",  file=sys.stderr)
+		# #print(f"Stats redisCache : {stats}",  file=sys.stderr)
 		cache.set(f'simulation_state_{roomName}', stats, timeout=None)
 
 
 	async def doSimulation(self) :
 		### Main loop of simulation ###
 		while self.runningGame:																																				# While the game didnt stop 
-			# print(f"running do : {self.runningGame}", file=sys.stderr)
+			# #print(f"running do : {self.runningGame}", file=sys.stderr)
 			self.racketList = []																																			# Empty the racket list
 			myDict = dictInfoRackets[self.roomName]																															# Get the game informations
 			for i in range(1, self.nbPlayers + 1):																															# For each player of the game
@@ -251,7 +251,7 @@ class	Movement() :
 	async def stopSimulation(self) :
 		### Stop simulation ###
 		self.runningGame = False
-		# print(f"running stop : {self.runningGame} <<--------- ", file=sys.stderr)
+		# #print(f"running stop : {self.runningGame} <<--------- ", file=sys.stderr)
 
 	
 

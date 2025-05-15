@@ -54,7 +54,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 		# self.scoring = False
 		self.map = Map() #None
 		self.matchReplay = []
-		dictInfoRackets[self.room_group_name] = {"scoring" : False, "racket1" : [[0, 300], [0,395]], "racket2" : [[1000, 300], [1000, 395]]}
+		dictInfoRackets[self.room_group_name] = {"scoring" : False, "racket1" : [[5, 300], [5,395]], "racket2" : [[995, 300], [995, 395]]}
 		# #print(dictInfoRackets, file=sys.stderr)
 
 		await self.channel_layer.group_add(

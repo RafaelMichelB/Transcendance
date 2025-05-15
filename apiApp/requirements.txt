@@ -6,3 +6,4 @@ djangorestframework
 numpy
 websockets==10.0
 requests
+django-cors-headers
